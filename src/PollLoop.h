@@ -69,7 +69,7 @@ protected:
 
     ExecutorData* createExecutorData() override;
 
-    void removeExecutorData(ExecutorData *execData);
+    void removeExecutorData(ExecutorData *execData) override;
 
     int createRequestExecutorInternal(int fd, ExecutorType execType);
 

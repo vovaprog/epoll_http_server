@@ -15,7 +15,7 @@ public:
         closeFile();
     }
 
-    int init(ServerParameters *params);
+    int init(ServerParameters *params) override;
 
 
 protected:

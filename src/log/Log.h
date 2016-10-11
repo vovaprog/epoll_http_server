@@ -1,7 +1,7 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-class ServerParameters;
+struct ServerParameters;
 
 class Log
 {
