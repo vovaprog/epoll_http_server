@@ -1,11 +1,11 @@
 <httpServerConfig>
     <maxClients>1000</maxClients>
     <rootFolder>./data</rootFolder>
-    <logLevel>info</logLevel>
-    <logType>stdout</logType>
+    <logLevel>info</logLevel>                              <!-- values: debug, info, warning, error -->
+    <logType>stdout</logType>                              <!-- values: stdout, mmap -->
     <logArchiveCount>20</logArchiveCount>
     <threadCount>2</threadCount>
-    <executorTimeoutMillis>10000</executorTimeoutMillis>
+    <executorTimeoutMillis>10000</executorTimeoutMillis>   <!-- after this time inactive connection will be closed -->
     <httpPorts>
         <port>8000</port>
     </httpPorts>
@@ -14,8 +14,8 @@
     </httpsPorts>
     <uwsgiApplications>
         <application>
-            <prefix>app</prefix>
-            <port>7070</port>
+            <prefix>app</prefix>   <!-- prefix of application url. for example:   url: /app/page   prefix: app -->
+            <port>7070</port>      <!-- port of running uwsgi server -->
         </application>
     </uwsgiApplications>
 </httpServerConfig>
