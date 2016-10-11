@@ -1,0 +1,22 @@
+<httpServerConfig>
+    <maxClients>1000</maxClients>
+    <rootFolder>./data</rootFolder>
+    <logLevel>info</logLevel>
+    <logType>stdout</logType>
+    <logArchiveCount>20</logArchiveCount>
+    <threadCount>2</threadCount>
+    <executorTimeoutMillis>10000</executorTimeoutMillis>
+    <httpPorts>
+        <port>8000</port>
+    </httpPorts>
+    <httpsPorts>
+        <port>1443</port>
+    </httpsPorts>
+    <uwsgiApplications>
+        <application>
+            <prefix>app</prefix>
+            <port>7070</port>
+        </application>
+    </uwsgiApplications>
+</httpServerConfig>
+
