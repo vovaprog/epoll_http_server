@@ -63,7 +63,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
                 }
                 else
                 {
-                    log->info("read failed: %s\n", strerror(errno));
+                    log->info("RequestExecutor::readRequest   read failed: %s\n", strerror(errorCode));
                 }
                 return -1;
             }

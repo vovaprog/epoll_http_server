@@ -148,7 +148,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
             }
             else
             {
-                log->error("read failed: %s\n", strerror(errno));
+                log->error("UwsgiExecutor::process_forwardResponseRead   read failed: %s\n", strerror(errno));
                 return ProcessResult::removeExecutor;
             }
         }
@@ -183,7 +183,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
             }
             else
             {
-                log->error("write failed: %s\n", strerror(errno));
+                log->error("write failed: %s\n", strerror(errorCode));
                 return ProcessResult::removeExecutor;
             }
         }
@@ -213,7 +213,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
             }
             else
             {
-                log->error("write failed: %s\n", strerror(errno));
+                log->error("write failed: %s\n", strerror(errorCode));
                 return ProcessResult::removeExecutor;
             }
         }
