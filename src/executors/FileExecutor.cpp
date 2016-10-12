@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
+#include <unistd.h>
 
 
 int FileExecutor::init(PollLoopBase *loop)
@@ -97,7 +98,7 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
 
     if(data.buffer.startRead(p, size))
     {
-        int bytesWritten = writeFd0(data, p, size);
+        int bytesWritten = write(data.fd0, p, size);
 
         if(bytesWritten <= 0)
         {

@@ -5,11 +5,16 @@
 
 class SslFileExecutor: public FileExecutor
 {
+public:
+
+    ProcessResult process(ExecutorData &data, int fd, int events) override;
+
 protected:
 
-    ssize_t writeFd0(ExecutorData &data, const void *buf, size_t count) override;
+    ProcessResult process_sendResponseSendData(ExecutorData &data) override;
 
     ProcessResult process_sendFile(ExecutorData &data) override;
+
 };
 
 #endif

@@ -50,13 +50,14 @@ int RequestExecutor::readRequest(ExecutorData &data)
 
     if(data.buffer.startWrite(p, size))
     {
-        int rd = readFd0(data, p, size);
+        int errorCode = 0;
+        int rd = readFd0(data, p, size, errorCode);
 
         if(rd <= 0)
         {
-            if(errno != EWOULDBLOCK && errno != EAGAIN && errno != EINTR)
+            if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR)
             {
-                if(rd == 0 && errno == 0)
+                if(rd == 0 && errorCode == 0)
                 {
                     log->debug("client disconnected\n");
                 }

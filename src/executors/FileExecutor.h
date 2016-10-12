@@ -17,7 +17,7 @@ protected:
 
     int createResponse(ExecutorData &data);
 
-    ProcessResult process_sendResponseSendData(ExecutorData &data);
+    virtual ProcessResult process_sendResponseSendData(ExecutorData &data);
 
     virtual ProcessResult process_sendFile(ExecutorData &data);
 };

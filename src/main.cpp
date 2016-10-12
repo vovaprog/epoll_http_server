@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     while(runFlag.load())
     {
         srv.logStats();
-        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     }
 
     srv.stop();

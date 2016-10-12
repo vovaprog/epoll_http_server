@@ -172,11 +172,12 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
 
     if(data.buffer.startRead(p, size))
     {
-        int bytesWritten = writeFd0(data, p, size);
+        int errorCode = 0;
+        int bytesWritten = writeFd0(data, p, size, errorCode);
 
         if(bytesWritten <= 0)
         {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
                 return ProcessResult::ok;
             }
@@ -201,11 +202,12 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
 
     if(data.buffer.startRead(p, size))
     {
-        int bytesWritten = writeFd0(data, p, size);
+        int errorCode = 0;
+        int bytesWritten = writeFd0(data, p, size, errorCode);
 
         if(bytesWritten <= 0)
         {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
                 return ProcessResult::ok;
             }

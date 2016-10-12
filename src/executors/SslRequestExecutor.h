@@ -23,7 +23,7 @@ public:
 
 protected:
 
-    ssize_t readFd0(ExecutorData &data, void *buf, size_t count) override;
+    ssize_t readFd0(ExecutorData &data, void *buf, size_t count, int &errorCode) override;
 
     ProcessResult process_handshake(ExecutorData &data);
 
