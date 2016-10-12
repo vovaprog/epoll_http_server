@@ -24,7 +24,7 @@ int FileExecutor::up(ExecutorData &data)
 
     if(data.fd1 < 0)
     {
-        log->error("open failed: %s\n", strerror(errno));
+        log->warning("open failed. file: %s   error: %s\n", loop->fileNameBuffer, strerror(errno));
         return -1;
     }
 

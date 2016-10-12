@@ -41,7 +41,8 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
         }
         else
         {
-            log->error("SSL_write failed\n");
+            int error = SSL_get_error(data.ssl, bytesWritten);
+            log->error("SSL_write failed: %d\n", error);
             return ProcessResult::removeExecutor;
         }
 
