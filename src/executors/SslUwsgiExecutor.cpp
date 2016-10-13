@@ -29,7 +29,7 @@ ssize_t SslUwsgiExecutor::writeFd0(ExecutorData &data, const void *buf, size_t c
             }
             else
             {
-                errorCode =EINVAL;
+                errorCode = EINVAL;
             }
         }
         else

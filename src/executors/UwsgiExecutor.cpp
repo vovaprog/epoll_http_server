@@ -17,19 +17,10 @@ int UwsgiExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
 
-    data.fd1 = socketConnect("127.0.0.1", data.port);
+    data.fd1 = socketConnectNonBlock("127.0.0.1", data.port, log);
 
     if(data.fd1 < 0)
     {
-        log->error("socketConnect failed\n");
-        return -1;
-    }
-
-    if(setNonBlock(data.fd1) != 0)
-    {
-        log->error("setNonBlock failed: %s\n", strerror(errno));
-        close(data.fd1);
-        data.fd1 = -1;
         return -1;
     }
 

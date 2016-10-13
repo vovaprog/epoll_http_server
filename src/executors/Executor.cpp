@@ -7,7 +7,7 @@ ssize_t Executor::readFd0(ExecutorData &data, void *buf, size_t count, int &erro
 {
     int result = read(data.fd0, buf, count);
 
-    if (result > 0)
+    if(result > 0)
     {
         errorCode = 0;
     }

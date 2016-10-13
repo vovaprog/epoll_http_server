@@ -146,7 +146,7 @@ ssize_t SslRequestExecutor::readFd0(ExecutorData &data, void *buf, size_t count,
 {
     int result = SSL_read(data.ssl, buf, count);
 
-    if (result > 0)
+    if(result > 0)
     {
         errorCode = 0;
     }

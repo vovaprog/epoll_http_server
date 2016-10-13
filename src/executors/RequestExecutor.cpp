@@ -203,7 +203,7 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
 
                 bool isUwsgiApplication = false;
 
-                for(UwsgiApplicationParameters& app : loop->parameters->uwsgiApplications)
+                for(UwsgiApplicationParameters & app : loop->parameters->uwsgiApplications)
                 {
                     if(isUrlPrefix(urlBuffer, app.prefix.c_str()))
                     {

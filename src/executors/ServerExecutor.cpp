@@ -20,7 +20,7 @@ int ServerExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = false;
 
-    data.fd0 = socketListen(data.port);
+    data.fd0 = socketListen(data.port, log);
     if(data.fd0 < 0)
     {
         return -1;
