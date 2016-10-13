@@ -121,13 +121,18 @@ int RequestExecutor::checkFileUrl(ExecutorData &data, char *urlBuffer)
                 (urlBuffer[i] >= 'A' && urlBuffer[i] <= 'Z') ||
                 (urlBuffer[i] >= '0' && urlBuffer[i] <= '9') ||
                 urlBuffer[i] == '/' || urlBuffer[i] == '.' || urlBuffer[i] == '_' ||
-                urlBuffer[i] == '-' || urlBuffer[i] == ' '))
+                urlBuffer[i] == '-' || urlBuffer[i] == ' ' || urlBuffer[i] == '?'))
         {
             return -1;
         }
         if(urlBuffer[i] == '.' && urlBuffer[i] == prevChar)
         {
             return -1;
+        }
+        if(urlBuffer[i] == '?')
+        {
+            urlBuffer[i] = 0;
+            break;
         }
         prevChar = urlBuffer[i];
     }
