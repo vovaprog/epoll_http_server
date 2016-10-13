@@ -4,6 +4,7 @@
 
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 int UwsgiExecutor::init(PollLoopBase *loop)
 {
@@ -17,17 +18,14 @@ int UwsgiExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
 
-    data.fd1 = socketConnect("127.0.0.1", data.port, log);
+    bool connected = false;
+
+    data.fd1 = socketConnectNonBlock("127.0.0.1", data.port, connected, log);
 
     if(data.fd1 < 0)
     {
         return -1;
     }
-
-	if(setNonBlock(data.fd1, log) != 0)
-	{
-		return -1;
-	}
 
     if(loop->addPollFd(data, data.fd1, EPOLLOUT) != 0)
     {
@@ -39,7 +37,14 @@ int UwsgiExecutor::up(ExecutorData &data)
         return -1;
     }
 
-    data.state = ExecutorData::State::forwardRequest;
+    if(connected)
+    {
+        data.state = ExecutorData::State::forwardRequest;
+    }
+    else
+    {
+        data.state = ExecutorData::State::waitConnect;
+    }
 
     return 0;
 }
@@ -47,6 +52,10 @@ int UwsgiExecutor::up(ExecutorData &data)
 
 ProcessResult UwsgiExecutor::process(ExecutorData &data, int fd, int events)
 {
+    if(data.state == ExecutorData::State::waitConnect && fd == data.fd1 && (events & EPOLLOUT))
+    {
+        return process_waitConnect(data);
+    }
     if(data.state == ExecutorData::State::forwardRequest && fd == data.fd1 && (events & EPOLLOUT))
     {
         return process_forwardRequest(data);
@@ -224,6 +233,25 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
         {
             return ProcessResult::ok;
         }
+    }
+    else
+    {
+        return ProcessResult::removeExecutor;
+    }
+}
+
+ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
+{
+    int socketError = socketConnectNonBlockCheck(data.fd1, log);
+
+    if(socketError == 0)
+    {
+        data.state = ExecutorData::State::forwardRequest;
+        return process_forwardRequest(data);
+    }
+    else if(socketError == EINPROGRESS)
+    {
+        return ProcessResult::ok;
     }
     else
     {

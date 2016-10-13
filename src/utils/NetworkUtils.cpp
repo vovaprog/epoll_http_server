@@ -48,14 +48,11 @@ int writeBytes(int fd, char *buf, int numberOfBytes)
     return bytesWritten;
 }
 
-int socketConnect(const char *address, int port, Log *log)
+int socketConnectNonBlock(const char *address, int port, bool &connected, Log *log)
 {
-    struct sockaddr_in remoteaddr;
-    remoteaddr.sin_family = AF_INET;
-    remoteaddr.sin_addr.s_addr = inet_addr(address);
-    remoteaddr.sin_port = htons(port);
+    connected = false;
 
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     if(sock < 0)
     {
@@ -63,15 +60,43 @@ int socketConnect(const char *address, int port, Log *log)
         return -1;
     }
 
+    struct sockaddr_in remoteaddr;
+    remoteaddr.sin_family = AF_INET;
+    remoteaddr.sin_addr.s_addr = inet_addr(address);
+    remoteaddr.sin_port = htons(port);
+
     if(connect(sock, (struct sockaddr*)&remoteaddr, sizeof(remoteaddr)) != 0)
     {
-        log->error("connect failed: %s\n", strerror(errno));
-        close(sock);
-        return -1;
+        if(errno != EINPROGRESS)
+        {
+            log->error("connect failed: %s\n", strerror(errno));
+            close(sock);
+            return -1;
+        }
+    }
+    else
+    {
+        connected = true;
     }
 
     return sock;
 }
+
+
+int socketConnectNonBlockCheck(int fd, Log *log)
+{
+    int socketError = 0;
+    socklen_t len = sizeof(socketError);
+
+    if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &socketError, &len) != 0)
+    {
+        log->error("getsockopt failed: %s\n", strerror(errno));
+        return errno;
+    }
+
+    return socketError;
+}
+
 
 int socketListen(int port, Log *log)
 {
