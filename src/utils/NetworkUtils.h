@@ -6,7 +6,7 @@ class Log;
 int readBytes(int fd, char *buf, int numberOfBytes);
 int writeBytes(int fd, char *buf, int numberOfBytes);
 
-int socketConnectNonBlock(const char *address, int port, Log *log);
+int socketConnect(const char *address, int port, Log *log);
 
 int socketListen(int port, Log *log);
 

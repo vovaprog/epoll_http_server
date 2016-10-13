@@ -17,12 +17,17 @@ int UwsgiExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
 
-    data.fd1 = socketConnectNonBlock("127.0.0.1", data.port, log);
+    data.fd1 = socketConnect("127.0.0.1", data.port, log);
 
     if(data.fd1 < 0)
     {
         return -1;
     }
+
+	if(setNonBlock(data.fd1, log) != 0)
+	{
+		return -1;
+	}
 
     if(loop->addPollFd(data, data.fd1, EPOLLOUT) != 0)
     {

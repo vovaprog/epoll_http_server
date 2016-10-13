@@ -48,14 +48,14 @@ int writeBytes(int fd, char *buf, int numberOfBytes)
     return bytesWritten;
 }
 
-int socketConnectNonBlock(const char *address, int port, Log *log)
+int socketConnect(const char *address, int port, Log *log)
 {
     struct sockaddr_in remoteaddr;
     remoteaddr.sin_family = AF_INET;
     remoteaddr.sin_addr.s_addr = inet_addr(address);
     remoteaddr.sin_port = htons(port);
 
-    int sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
 
     if(sock < 0)
     {
