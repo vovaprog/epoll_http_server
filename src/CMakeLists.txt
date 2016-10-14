@@ -18,6 +18,7 @@ set(SOURCE
     UwsgiApplicationParameters.h
     ProcessResult.h
     ExecutorType.h
+    ConnectionType.h
     PollData.h
     ExecutorData.h     ExecutorData.cpp
     ServerParameters.h ServerParameters.cpp

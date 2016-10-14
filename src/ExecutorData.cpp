@@ -34,6 +34,8 @@ void ExecutorData::down()
 
     removeOnTimeout = true;
 
+    connectionType = (int)ConnectionType::none;
+
     return;
 }
 

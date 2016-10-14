@@ -154,6 +154,38 @@ int ServerParameters::load(const char *fileName)
                 return -1;
             }
 
+            tinyxml2::XMLElement *el = getChild(child, "connectionType", false);
+            if(el != nullptr)
+            {
+                app.connectionType = (int)ConnectionType::none;
+
+                int v;
+                if(el->QueryIntAttribute("clear", &v) == tinyxml2::XML_SUCCESS)
+                {
+                    if(v != 0)
+                    {
+                        app.connectionType = (app.connectionType | (int)ConnectionType::clear);
+                    }
+                }
+                if(el->QueryIntAttribute("ssl", &v) == tinyxml2::XML_SUCCESS)
+                {
+                    if(v != 0)
+                    {
+                        app.connectionType = (app.connectionType | (int)ConnectionType::ssl);
+                    }
+                }
+
+                if(app.connectionType == (int)ConnectionType::none)
+                {
+                    printf("invalid connectionType\n");
+                    return -1;
+                }
+            }
+            else
+            {
+                app.connectionType = ((int)ConnectionType::clear | (int)ConnectionType::ssl);
+            }
+
             uwsgiApplications.push_back(app);
         }
     }
@@ -182,7 +214,22 @@ void ServerParameters::writeToLog(Log *log)
     }
     for(UwsgiApplicationParameters & app : uwsgiApplications)
     {
-        log->info("uwsgi application   prefix: %s   port: %d\n", app.prefix.c_str(), app.port);
+        const char *conTypeString = "none";
+
+        if((app.connectionType & (int)ConnectionType::clear) && (app.connectionType & (int)ConnectionType::ssl))
+        {
+            conTypeString = "clear, ssl";
+        }
+        else if(app.connectionType & (int)ConnectionType::clear)
+        {
+            conTypeString = "clear";
+        }
+        else if(app.connectionType & (int)ConnectionType::ssl)
+        {
+            conTypeString = "ssl";
+        }
+
+        log->info("uwsgi application   prefix: %s   port: %d   connection: %s\n", app.prefix.c_str(), app.port, conTypeString);
     }
     log->info("-----------------------------\n");
 }

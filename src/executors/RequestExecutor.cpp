@@ -17,6 +17,7 @@ int RequestExecutor::init(PollLoopBase *loop)
 int RequestExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
+    data.connectionType = (int)ConnectionType::clear;
 
     data.buffer.init(ExecutorData::REQUEST_BUFFER_SIZE);
 
@@ -207,6 +208,11 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
                 {
                     if(isUrlPrefix(urlBuffer, app.prefix.c_str()))
                     {
+                        if((data.connectionType & app.connectionType) == 0)
+                        {
+                            return ParseRequestResult::invalid;
+                        }
+
                         data.port = app.port;
                         isUwsgiApplication = true;
                         break;

@@ -15,6 +15,7 @@ int SslRequestExecutor::init(PollLoopBase *loop)
 int SslRequestExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
+    data.connectionType = (int)ConnectionType::ssl;
 
     data.buffer.init(ExecutorData::REQUEST_BUFFER_SIZE);
 

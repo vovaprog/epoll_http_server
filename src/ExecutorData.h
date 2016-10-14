@@ -2,6 +2,7 @@
 #define EXECUTOR_DATA_H
 
 #include <TransferRingBuffer.h>
+#include <ConnectionType.h>
 
 #include <sys/types.h>
 #include <openssl/ssl.h>
@@ -48,6 +49,8 @@ struct ExecutorData
 
     long long int lastProcessTime = 0;
     bool removeOnTimeout = true;
+
+    int connectionType = (int)ConnectionType::none;
 };
 
 #endif
