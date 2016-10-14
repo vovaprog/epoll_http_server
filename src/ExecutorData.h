@@ -24,7 +24,7 @@ struct ExecutorData
     {
         invalid, readRequest, sendResponse, sendFile,
         forwardRequest, forwardResponse, forwardResponseOnlyWrite,
-        sslHandshake, waitConnect
+        sslHandshake, waitConnect, sendError
     };
 
     int index = -1;

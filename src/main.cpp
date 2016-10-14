@@ -4,7 +4,6 @@
 #include <atomic>
 
 
-Server srv;
 std::atomic_bool runFlag;
 
 static void sig_int_handler(int i)
@@ -29,6 +28,10 @@ int main(int argc, char** argv)
     runFlag.store(true);
     signal(SIGINT, sig_int_handler);
 
+    Server::staticInit();
+
+    Server srv;
+
     ServerParameters params;
     if(params.load(fileName) != 0)
     {
@@ -48,7 +51,7 @@ int main(int argc, char** argv)
 
     srv.stop();
 
-    Server::cleanup();
+    Server::staticDestroy();
 
     return 0;
 }

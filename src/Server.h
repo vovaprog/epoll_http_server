@@ -25,7 +25,8 @@ public:
 
     void logStats();
 
-    static void cleanup();
+    static int  staticInit();
+    static void staticDestroy();
 
 protected:
 

@@ -11,8 +11,6 @@ public:
 
 protected:
 
-    ProcessResult process_sendResponseSendData(ExecutorData &data) override;
-
     ProcessResult process_sendFile(ExecutorData &data) override;
 
 };

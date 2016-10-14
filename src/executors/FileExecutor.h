@@ -16,6 +16,7 @@ public:
 protected:
 
     int createResponse(ExecutorData &data);
+    int createError(ExecutorData &data, int statusCode);
 
     virtual ProcessResult process_sendResponseSendData(ExecutorData &data);
 

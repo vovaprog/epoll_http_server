@@ -2,6 +2,7 @@
 
 #include <LogStdout.h>
 #include <LogMmap.h>
+#include <HttpUtils.h>
 
 #include <mutex>
 #include <openssl/bio.h>
@@ -55,7 +56,14 @@ int Server::sslInit()
 }
 
 
-void Server::cleanup()
+int Server::staticInit()
+{
+    initHttpUtils();
+
+    return 0;
+}
+
+void Server::staticDestroy()
 {
     if(sslInited)
     {

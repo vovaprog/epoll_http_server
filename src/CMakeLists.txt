@@ -44,7 +44,9 @@ set(SOURCE
     utils/percent_decode.h     utils/percent_decode.c
     utils/FileUtils.h          utils/FileUtils.cpp
     utils/NetworkUtils.h       utils/NetworkUtils.cpp
-    utils/TimeUtils.h          utils/TimeUtils.cpp)
+    utils/TimeUtils.h          utils/TimeUtils.cpp
+    utils/SslUtils.h           utils/SslUtils.cpp
+    utils/HttpUtils.h          utils/HttpUtils.cpp)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread")
