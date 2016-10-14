@@ -55,7 +55,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
 
         if(rd <= 0)
         {
-            if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR)
+            if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR && errorCode != EINPROGRESS)
             {
                 if(rd == 0 && errorCode == 0)
                 {
@@ -63,7 +63,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
                 }
                 else
                 {
-                    log->info("RequestExecutor::readRequest   read failed: %s\n", strerror(errorCode));
+                    log->warning("RequestExecutor::readRequest   read failed: %s   (%d)\n", strerror(errorCode), errorCode);
                 }
                 return -1;
             }
