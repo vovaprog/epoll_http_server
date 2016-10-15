@@ -1,5 +1,6 @@
 #include <SslFileExecutor.h>
 #include <PollLoopBase.h>
+#include <SslUtils.h>
 
 #include <sys/epoll.h>
 #include <unistd.h>
@@ -88,5 +89,11 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
     }
 
     return ProcessResult::ok;
+}
+
+
+ssize_t SslFileExecutor::writeFd0(ExecutorData &data, const void *buf, size_t count, int &errorCode)
+{
+    return sslWriteFd0(this, data, buf, count, errorCode);
 }
 

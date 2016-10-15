@@ -13,6 +13,8 @@ protected:
 
     ProcessResult process_sendFile(ExecutorData &data) override;
 
+    ssize_t writeFd0(ExecutorData &data, const void *buf, size_t count, int &errorCode) override;
+
 };
 
 #endif
