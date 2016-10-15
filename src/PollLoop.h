@@ -73,6 +73,8 @@ protected:
 
     int createRequestExecutorInternal(int fd, ExecutorType execType);
 
+    void logStats();
+
 
 protected:
 

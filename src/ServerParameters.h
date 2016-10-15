@@ -27,6 +27,7 @@ struct ServerParameters
         logFileSize = 1024 * 1024;
         logArchiveCount = 10;
         executorTimeoutMillis = 10000;
+        logStats = true;
     }
 
     int load(const char *fileName);
@@ -45,6 +46,8 @@ struct ServerParameters
     Log::Type logType;
     int logFileSize;
     int logArchiveCount;
+
+    bool logStats;
 
     std::vector<int> httpPorts;
     std::vector<int> httpsPorts;

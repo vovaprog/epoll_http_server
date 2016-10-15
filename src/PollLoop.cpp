@@ -110,6 +110,10 @@ int PollLoop::run()
         if(curMillis - lastCheckTimeoutMillis >= parameters->executorTimeoutMillis)
         {
             checkTimeout(curMillis);
+            if(parameters->logStats)
+            {
+                logStats();
+            }
         }
     }
 
@@ -481,4 +485,31 @@ int PollLoop::createRequestExecutorInternal(int fd, ExecutorType execType)
     }
 
     return 0;
+}
+
+
+void PollLoop::logStats()
+{
+    unsigned long long int tid = pthread_self();
+
+    log->info("[%llu]<<<<<<<\n",tid);
+
+    for(int execIndex : usedExecDatas)
+    {
+        const char *execString = "unknown";
+        if(execDatas[execIndex].pExecutor == &serverExecutor) execString = "server";
+        else if(execDatas[execIndex].pExecutor == &sslServerExecutor) execString = "sslServer";
+        else if(execDatas[execIndex].pExecutor == &requestExecutor) execString = "request";
+        else if(execDatas[execIndex].pExecutor == &sslRequestExecutor) execString = "sslRequest";
+        else if(execDatas[execIndex].pExecutor == &fileExecutor) execString = "file";
+        else if(execDatas[execIndex].pExecutor == &sslFileExecutor) execString = "sslFile";
+        else if(execDatas[execIndex].pExecutor == &uwsgiExecutor) execString = "uwsgi";
+        else if(execDatas[execIndex].pExecutor == &sslUwsgiExecutor) execString = "sslUwsgi";
+        else if(execDatas[execIndex].pExecutor == &newFdExecutor) execString = "newFd";
+
+        log->info("[%llu]   executor: %s   state: %d   fd0: %d   fd1: %d\n",
+                  tid, execString, (int)execDatas[execIndex].state, execDatas[execIndex].fd0, execDatas[execIndex].fd1);
+    }
+
+    log->info("[%llu]>>>>>>>\n",tid);
 }
