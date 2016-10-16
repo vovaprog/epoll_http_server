@@ -47,7 +47,7 @@ int LogMmap::init(ServerParameters *params)
 
 int LogMmap::openFile()
 {
-    int fd = open(logFileName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    fd = open(logFileName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if(fd < 0)
     {
         perror("open failed");
@@ -78,7 +78,12 @@ void LogMmap::closeFile()
     if(fd >= 0)
     {
         buffer.init(nullptr, 0);
-        munmap(buffer.getDataPtr(), logFileSize);
+
+        if(munmap(buffer.getDataPtr(), logFileSize) != 0)
+        {
+            perror("munmap failed\n");
+        }
+
         close(fd);
         fd = -1;
     }
