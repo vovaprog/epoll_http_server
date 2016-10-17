@@ -23,6 +23,8 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 {
     void *p;
     int size;
+    bool operationOk = false;
+
     if(data.fd1 > 0)
     {
         if(data.buffer.startWrite(p, size))
@@ -38,8 +40,11 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
                 close(data.fd1);
                 data.fd1 = -1;
             }
-
-            data.buffer.endWrite(bytesRead);
+            else
+            {
+                operationOk = true;
+                data.buffer.endWrite(bytesRead);
+            }
         }
     }
     if(data.buffer.startRead(p, size))
@@ -48,7 +53,15 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 
         if(bytesWritten > 0)
         {
+            operationOk = true;
             data.buffer.endRead(bytesWritten);
+
+            data.bytesToSend -= bytesWritten;
+
+            if(data.bytesToSend == 0)
+            {
+                return ProcessResult::removeExecutor;
+            }
         }
         else
         {
@@ -71,13 +84,6 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
                 return ProcessResult::removeExecutor;
             }
         }
-
-        data.bytesToSend -= bytesWritten;
-
-        if(data.bytesToSend == 0)
-        {
-            return ProcessResult::removeExecutor;
-        }
     }
     else
     {
@@ -86,6 +92,15 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
             log->error("buffer.startRead failed\n");
             return ProcessResult::removeExecutor;
         }
+    }
+
+    if(operationOk)
+    {
+        data.badOperationCounter = 0;
+    }
+    else
+    {
+        ++data.badOperationCounter;
     }
 
     return ProcessResult::ok;

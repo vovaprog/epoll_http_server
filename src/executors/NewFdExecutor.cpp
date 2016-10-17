@@ -14,6 +14,7 @@ int NewFdExecutor::init(PollLoopBase *loop)
 int NewFdExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = false;
+    data.state = ExecutorData::State::ok;
 
     return 0;
 }

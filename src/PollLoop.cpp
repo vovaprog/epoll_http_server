@@ -90,20 +90,38 @@ int PollLoop::run()
             PollData *pollData = static_cast<PollData*>(events[i].data.ptr);
             ExecutorData &execData = execDatas[pollData->executorDataIndex];
 
-            ProcessResult result = execData.pExecutor->process(execData, pollData->fd, events[i].events);
+            if(execData.state != ExecutorData::State::invalid)
+            {
+                if((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR))
+                {
+                    removeExecutorData(&execData);
+                }
+                else
+                {
+                    ProcessResult result = execData.pExecutor->process(execData, pollData->fd, events[i].events);
 
-            if(result == ProcessResult::removeExecutor)
-            {
-                removeExecutorData(&execData);
-            }
-            else if(result == ProcessResult::shutdown)
-            {
-                destroy();
-                return -1;
-            }
-            else
-            {
-                execData.lastProcessTime = curMillis;
+                    if(result == ProcessResult::removeExecutor)
+                    {
+                        removeExecutorData(&execData);
+                    }
+                    else if(result == ProcessResult::shutdown)
+                    {
+                        destroy();
+                        return -1;
+                    }
+                    else
+                    {
+                        if(execData.badOperationCounter > ExecutorData::MAX_BAD_OPERATION_COUNTER)
+                        {
+                            log->warning("big badOperationCounter. destroy executor\n");
+                            removeExecutorData(&execData);
+                        }
+                        else
+                        {
+                            execData.lastProcessTime = curMillis;
+                        }
+                    }
+                }
             }
         }
 
@@ -200,7 +218,7 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
     int pollIndex = emptyPollDatas.top();
 
     epoll_event ev;
-    ev.events = events;
+    ev.events = (events | EPOLLRDHUP | EPOLLERR);
     ev.data.ptr = &pollDatas[pollIndex];
     if(epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
     {
@@ -244,7 +262,7 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
     }
 
     epoll_event ev;
-    ev.events = events;
+    ev.events = (events | EPOLLRDHUP | EPOLLERR);
     ev.data.ptr = &pollDatas[pollIndex];
     if(epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1)
     {
@@ -491,25 +509,15 @@ int PollLoop::createRequestExecutorInternal(int fd, ExecutorType execType)
 void PollLoop::logStats()
 {
     unsigned long long int tid = pthread_self();
+    char tidBuf[30];
+    snprintf(tidBuf, 30, "%llu", tid);
 
-    log->info("[%llu]<<<<<<<\n",tid);
+    log->info("[%s]<<<<<<<\n",tidBuf);
 
     for(int execIndex : usedExecDatas)
     {
-        const char *execString = "unknown";
-        if(execDatas[execIndex].pExecutor == &serverExecutor) execString = "server";
-        else if(execDatas[execIndex].pExecutor == &sslServerExecutor) execString = "sslServer";
-        else if(execDatas[execIndex].pExecutor == &requestExecutor) execString = "request";
-        else if(execDatas[execIndex].pExecutor == &sslRequestExecutor) execString = "sslRequest";
-        else if(execDatas[execIndex].pExecutor == &fileExecutor) execString = "file";
-        else if(execDatas[execIndex].pExecutor == &sslFileExecutor) execString = "sslFile";
-        else if(execDatas[execIndex].pExecutor == &uwsgiExecutor) execString = "uwsgi";
-        else if(execDatas[execIndex].pExecutor == &sslUwsgiExecutor) execString = "sslUwsgi";
-        else if(execDatas[execIndex].pExecutor == &newFdExecutor) execString = "newFd";
-
-        log->info("[%llu]   executor: %s   state: %d   fd0: %d   fd1: %d\n",
-                  tid, execString, (int)execDatas[execIndex].state, execDatas[execIndex].fd0, execDatas[execIndex].fd1);
+        execDatas[execIndex].writeLog(log, Log::Level::info, tidBuf);
     }
 
-    log->info("[%llu]>>>>>>>\n",tid);
+    log->info("[%s]>>>>>>>\n",tidBuf);
 }

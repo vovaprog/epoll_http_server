@@ -9,6 +9,8 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
+    const char* name() override { return "sslfile"; }
+
 protected:
 
     ProcessResult process_sendFile(ExecutorData &data) override;

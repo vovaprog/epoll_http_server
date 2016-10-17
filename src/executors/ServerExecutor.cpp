@@ -19,6 +19,7 @@ int ServerExecutor::init(PollLoopBase *srv)
 int ServerExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = false;
+    data.state = ExecutorData::State::ok;
 
     data.fd0 = socketListen(data.port, log);
     if(data.fd0 < 0)

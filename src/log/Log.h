@@ -25,6 +25,8 @@ public:
     virtual void warning(const char* format, ...) __attribute__ ((format (printf, 2, 3))) = 0;
     virtual void error(const char* format, ...)   __attribute__ ((format (printf, 2, 3))) = 0;
 
+    virtual void writeLog(Level argLevel, const char *format, ...) __attribute__ ((format (printf, 3, 4))) = 0;
+
     static const char* logLevelString(Level level)
     {
         switch(level){

@@ -11,6 +11,8 @@ public:
     int up(ExecutorData &data) override;
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
+
+    const char* name() override { return "newfd"; }
 };
 
 #endif

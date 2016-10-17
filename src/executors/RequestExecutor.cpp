@@ -48,6 +48,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
 {
     void *p;
     int size;
+    bool readOk = false;
 
     if(data.buffer.startWrite(p, size))
     {
@@ -56,7 +57,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
 
         if(rd <= 0)
         {
-            if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR && errorCode != EINPROGRESS)
+            if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR)
             {
                 if(rd == 0 && errorCode == 0)
                 {
@@ -71,6 +72,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
         }
         else
         {
+            readOk = true;
             data.buffer.endWrite(rd);
         }
     }
@@ -78,6 +80,15 @@ int RequestExecutor::readRequest(ExecutorData &data)
     {
         log->warning("requestBuffer.startWrite failed");
         return -1;
+    }
+
+    if(readOk)
+    {
+        data.badOperationCounter = 0;
+    }
+    else
+    {
+        ++data.badOperationCounter;
     }
 
     return 0;

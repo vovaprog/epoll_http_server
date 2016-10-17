@@ -13,6 +13,8 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
+    const char* name() override { return "uwsgi"; }
+
 protected:
 
     ProcessResult process_forwardRequest(ExecutorData &data);

@@ -171,9 +171,14 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
             {
                 return ProcessResult::removeExecutor;
             }
+            else
+            {
+                ++data.badOperationCounter;
+            }
         }
         else
         {
+            data.badOperationCounter = 0;
             data.buffer.endRead(bytesWritten);
 
             if(bytesWritten == size)
@@ -207,6 +212,7 @@ ProcessResult FileExecutor::process_sendFile(ExecutorData &data)
     {
         if(errno == EAGAIN || errno == EWOULDBLOCK)
         {
+            ++data.badOperationCounter;
             return ProcessResult::ok;
         }
         else
@@ -216,6 +222,8 @@ ProcessResult FileExecutor::process_sendFile(ExecutorData &data)
         }
 
     }
+
+    data.badOperationCounter = 0;
 
     data.bytesToSend -= bytesWritten;
 

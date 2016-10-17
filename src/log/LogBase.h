@@ -17,6 +17,8 @@ public:
 
     void error(const char* format, ...) override __attribute__ ((format (printf, 2, 3)));
 
+    void writeLog(Level argLevel, const char *format, ...) override __attribute__ ((format (printf, 3, 4)));
+
 protected:
 
     virtual void writeLog(const char *prefix, const char* format, va_list args) = 0;

@@ -13,6 +13,8 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
+    const char* name() override { return "request"; }
+
 protected:
 
     int readRequest(ExecutorData &data);

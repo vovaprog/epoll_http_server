@@ -56,3 +56,43 @@ void LogBase::error(const char* format, ...)
     va_end(args);
 }
 
+
+void LogBase::writeLog(Level argLevel, const char *format, ...)
+{
+    if(argLevel == Level::debug && level <= Level::debug)
+    {
+        va_list args;
+        va_start(args, format);
+
+        writeLog("[DEBUG]  ", format, args);
+
+        va_end(args);
+    }
+    else if(argLevel == Level::info && level <= Level::info)
+    {
+        va_list args;
+        va_start(args, format);
+
+        writeLog("[INFO]   ", format, args);
+
+        va_end(args);
+    }
+    else if(argLevel == Level::warning && level <= Level::warning)
+    {
+        va_list args;
+        va_start(args, format);
+
+        writeLog("[WARNING] ", format, args);
+
+        va_end(args);
+    }
+    else if(argLevel == Level::error && level <= Level::error)
+    {
+        va_list args;
+        va_start(args, format);
+
+        writeLog("[ERROR]   ", format, args);
+
+        va_end(args);
+    }
+}

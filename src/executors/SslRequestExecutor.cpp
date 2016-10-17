@@ -195,6 +195,7 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
     }
     else if(result == HandleHandshakeResult::again)
     {
+        ++data.badOperationCounter;
         return ProcessResult::ok;
     }
     else

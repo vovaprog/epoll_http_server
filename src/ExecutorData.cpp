@@ -1,4 +1,6 @@
 #include <ExecutorData.h>
+#include <Log.h>
+#include <Executor.h>
 
 #include <unistd.h>
 #include <openssl/ssl.h>
@@ -36,6 +38,23 @@ void ExecutorData::down()
 
     connectionType = (int)ConnectionType::none;
 
+    badOperationCounter = 0;
+
     return;
 }
 
+
+void ExecutorData::writeLog(Log *log, Log::Level level, const char *title)
+{
+    const char *execString;
+    if(pExecutor != nullptr)
+    {
+        execString = pExecutor->name();
+    }
+    else
+    {
+        execString = "null";
+    }
+
+    log->writeLog(level, "%s   executor: %s   state: %d   fd0: %d   fd1: %d\n", title,  execString, (int)state, fd0, fd1);
+}

@@ -3,6 +3,7 @@
 
 #include <TransferRingBuffer.h>
 #include <ConnectionType.h>
+#include <Log.h>
 
 #include <sys/types.h>
 #include <openssl/ssl.h>
@@ -18,13 +19,16 @@ struct ExecutorData
 
     void down();
 
+    void writeLog(Log *log, Log::Level level, const char *title);
+
+
     static const int REQUEST_BUFFER_SIZE = 10000;
 
     enum class State
     {
         invalid, readRequest, sendResponse, sendFile,
         forwardRequest, forwardResponse, forwardResponseOnlyWrite,
-        sslHandshake, waitConnect, sendError
+        sslHandshake, waitConnect, sendError, ok
     };
 
     int index = -1;
@@ -51,6 +55,9 @@ struct ExecutorData
     bool removeOnTimeout = true;
 
     int connectionType = (int)ConnectionType::none;
+
+    static const int MAX_BAD_OPERATION_COUNTER = 1000;
+    int badOperationCounter = 0;
 };
 
 #endif

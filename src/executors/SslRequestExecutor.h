@@ -21,6 +21,8 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
+    const char* name() override { return "sslrequest"; }
+
 protected:
 
     ssize_t readFd0(ExecutorData &data, void *buf, size_t count, int &errorCode) override;
