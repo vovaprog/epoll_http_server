@@ -56,8 +56,8 @@ struct ExecutorData
 
     int connectionType = (int)ConnectionType::none;
 
-    static const int MAX_BAD_OPERATION_COUNTER = 1000;
-    int badOperationCounter = 0;
+    static const int MAX_RETRY_COUNTER = 1000;
+    int retryCounter = 0;
 };
 
 #endif

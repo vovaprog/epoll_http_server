@@ -92,7 +92,7 @@ int PollLoop::run()
 
             if(execData.state != ExecutorData::State::invalid)
             {
-                if((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR))
+                if(((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR)) && pollData->fd == execData.fd0)
                 {
                     removeExecutorData(&execData);
                 }
@@ -111,7 +111,7 @@ int PollLoop::run()
                     }
                     else
                     {
-                        if(execData.badOperationCounter > ExecutorData::MAX_BAD_OPERATION_COUNTER)
+                        if(execData.retryCounter > ExecutorData::MAX_RETRY_COUNTER)
                         {
                             log->warning("big badOperationCounter. destroy executor\n");
                             removeExecutorData(&execData);

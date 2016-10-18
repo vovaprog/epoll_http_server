@@ -38,7 +38,7 @@ void ExecutorData::down()
 
     connectionType = (int)ConnectionType::none;
 
-    badOperationCounter = 0;
+    retryCounter = 0;
 
     return;
 }

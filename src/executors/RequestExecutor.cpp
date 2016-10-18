@@ -84,11 +84,11 @@ int RequestExecutor::readRequest(ExecutorData &data)
 
     if(readOk)
     {
-        data.badOperationCounter = 0;
+        data.retryCounter = 0;
     }
     else
     {
-        ++data.badOperationCounter;
+        ++data.retryCounter;
     }
 
     return 0;

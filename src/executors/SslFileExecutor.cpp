@@ -96,11 +96,11 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 
     if(operationOk)
     {
-        data.badOperationCounter = 0;
+        data.retryCounter = 0;
     }
     else
     {
-        ++data.badOperationCounter;
+        ++data.retryCounter;
     }
 
     return ProcessResult::ok;

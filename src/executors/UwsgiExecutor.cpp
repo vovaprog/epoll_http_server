@@ -91,7 +91,7 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
         {
             if(errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                ++data.badOperationCounter;
+                ++data.retryCounter;
                 return ProcessResult::ok;
             }
             else
@@ -100,7 +100,7 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
                 return ProcessResult::removeExecutor;
             }
         }
-        data.badOperationCounter = 0;
+        data.retryCounter = 0;
 
         data.buffer.endRead(bytesWritten);
 
@@ -151,7 +151,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
             }
             else if(errno == EAGAIN || errno == EWOULDBLOCK)
             {
-                ++data.badOperationCounter;
+                ++data.retryCounter;
                 return ProcessResult::ok;
             }
             else
@@ -162,7 +162,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
         }
         else
         {
-            data.badOperationCounter = 0;
+            data.retryCounter = 0;
             data.buffer.endWrite(bytesRead);
             return ProcessResult::ok;
         }
@@ -188,7 +188,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
         {
             if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
-                ++data.badOperationCounter;
+                ++data.retryCounter;
                 return ProcessResult::ok;
             }
             else
@@ -197,7 +197,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
                 return ProcessResult::removeExecutor;
             }
         }
-        data.badOperationCounter = 0;
+        data.retryCounter = 0;
 
         data.buffer.endRead(bytesWritten);
     }
@@ -220,7 +220,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
         {
             if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
-                ++data.badOperationCounter;
+                ++data.retryCounter;
                 return ProcessResult::ok;
             }
             else
@@ -229,7 +229,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
                 return ProcessResult::removeExecutor;
             }
         }
-        data.badOperationCounter = 0;
+        data.retryCounter = 0;
 
         data.buffer.endRead(bytesWritten);
 
@@ -259,7 +259,7 @@ ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
     }
     else if(socketError == EINPROGRESS)
     {
-        ++data.badOperationCounter;
+        ++data.retryCounter;
         return ProcessResult::ok;
     }
     else
