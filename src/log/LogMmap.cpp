@@ -145,7 +145,14 @@ void LogMmap::writeLog(const char *prefix, const char* format, va_list args)
     getCurrentTimeString(timeBuffer, 50);
 
     int prefixLength = sprintf((char*)data, "%s %s   ", prefix, timeBuffer);
-    int bytesWritten = vsnprintf((char*)data + prefixLength, maxMessageSize - prefixLength, format, args);
+
+    int bytesToWrite = maxMessageSize - prefixLength;
+    int bytesWritten = vsnprintf((char*)data + prefixLength, bytesToWrite, format, args);
+
+    if(bytesWritten >= bytesToWrite)
+    {
+        bytesWritten = bytesToWrite - 1;
+    }
 
     buffer.endWrite(prefixLength + bytesWritten);
 }

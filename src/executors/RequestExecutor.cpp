@@ -184,6 +184,15 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
         {
             char *cdata = (char*)p;
 
+            if(size < ExecutorData::REQUEST_BUFFER_SIZE)
+            {
+                cdata[size] = 0;
+            }
+            else
+            {
+                cdata[ExecutorData::REQUEST_BUFFER_SIZE - 1] = 0;
+            }
+
             char *endOfHeaders = strstr(cdata, "\r\n\r\n");
 
             if(endOfHeaders != nullptr)
@@ -259,6 +268,8 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
                 {
                     strcat(loop->fileNameBuffer, urlBuffer);
                 }
+
+                log->debug("request: [[[[[\n%s\n]]]]]\n", cdata);
 
                 if(isUwsgiApplication)
                 {

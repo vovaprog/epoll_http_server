@@ -38,7 +38,7 @@ protected:
 
     TransferBuffer buffer;
 
-    const int maxMessageSize = 512;
+    const int maxMessageSize = 1024;
 
     int fd = -1;
 
