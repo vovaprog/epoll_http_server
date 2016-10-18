@@ -34,6 +34,8 @@ void ExecutorData::down()
 
     buffer.clear();
 
+    createTime = 0;
+    lastProcessTime = 0;
     removeOnTimeout = true;
 
     connectionType = (int)ConnectionType::none;

@@ -51,6 +51,9 @@ struct ExecutorData
 
     SSL *ssl = nullptr;
 
+    static const long long int MAX_TIME_TO_LIVE_MILLIS = 1000 * 60 * 30; // 30 minutes
+
+    long long int createTime = 0;
     long long int lastProcessTime = 0;
     bool removeOnTimeout = true;
 

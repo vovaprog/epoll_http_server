@@ -315,13 +315,13 @@ int PollLoop::listenPort(int port, ExecutorType execType)
 void PollLoop::checkTimeout(long long int curMillis)
 {
     removeExecDatas.erase(removeExecDatas.begin(), removeExecDatas.end());
-    removeExecDatas.reserve(usedExecDatas.size());
 
     for(int i : usedExecDatas)
     {
         if(execDatas[i].removeOnTimeout)
         {
-            if(curMillis - execDatas[i].lastProcessTime > parameters->executorTimeoutMillis)
+            if((curMillis - execDatas[i].lastProcessTime > parameters->executorTimeoutMillis) ||
+               (curMillis - execDatas[i].createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
             {
                 //can't remove here, because removeExecutorData modifies usedExecDatas
                 removeExecDatas.push_back(i);
@@ -458,6 +458,8 @@ ExecutorData* PollLoop::createExecutorData()
     int execIndex = emptyExecDatas.top();
     emptyExecDatas.pop();
     usedExecDatas.insert(execIndex);
+
+    execDatas[execIndex].createTime = getMilliseconds();
 
     return &execDatas[execIndex];
 }
