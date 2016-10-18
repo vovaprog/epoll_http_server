@@ -3,6 +3,8 @@
 
 #include <Executor.h>
 
+#include <time.h>
+
 class FileExecutor: public Executor
 {
 public:
@@ -17,7 +19,7 @@ public:
 
 protected:
 
-    int createResponse(ExecutorData &data);
+    int createResponse(ExecutorData &data, time_t lastModified);
     int createError(ExecutorData &data, int statusCode);
 
     virtual ProcessResult process_sendResponseSendData(ExecutorData &data);

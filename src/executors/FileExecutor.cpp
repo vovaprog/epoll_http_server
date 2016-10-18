@@ -2,8 +2,10 @@
 #include <FileExecutor.h>
 #include <FileUtils.h>
 #include <HttpUtils.h>
+#include <TimeUtils.h>
 
 #include <sys/epoll.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
@@ -46,15 +48,22 @@ int FileExecutor::up(ExecutorData &data)
         return -1;
     }
 
-    data.bytesToSend = fileSize(data.fd1);
 
-    if(data.bytesToSend < 0)
+    struct stat st;
+    time_t lastModified;
+
+    if(fstat(data.fd1, &st) == 0)
     {
-        log->error("fileSize failed: %s\n", strerror(errno));
+        data.bytesToSend = st.st_size;
+        lastModified = st.st_mtime;
+    }
+    else
+    {
         return -1;
     }
 
-    if(createResponse(data) != 0)
+
+    if(createResponse(data, lastModified) != 0)
     {
         return -1;
     }
@@ -90,7 +99,7 @@ ProcessResult FileExecutor::process(ExecutorData &data, int fd, int events)
 }
 
 
-int FileExecutor::createResponse(ExecutorData &data)
+int FileExecutor::createResponse(ExecutorData &data, time_t lastModified)
 {
     data.buffer.clear();
 
@@ -99,7 +108,15 @@ int FileExecutor::createResponse(ExecutorData &data)
 
     if(data.buffer.startWrite(p, size))
     {
-        int ret = snprintf((char*)p, size, "HTTP/1.1 200 Ok\r\nContent-Length: %lld\r\nConnection: close\r\n\r\n", data.bytesToSend);
+        char lastModifiedString[80];
+        strftime(lastModifiedString, sizeof(lastModifiedString), RFC1123FMT, gmtime(&lastModified));
+
+        int ret = snprintf((char*)p, size,
+"HTTP/1.1 200 Ok\r\n"
+"Content-Length: %lld\r\n"
+"Last-Modified: %s\r\n"
+"Connection: close\r\n\r\n", data.bytesToSend, lastModifiedString);
+
         if(ret < 0)
         {
             return -1;
@@ -132,13 +149,16 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
 
     if(data.buffer.startWrite(p, size))
     {
-        int ret = snprintf((char*)p, size, "HTTP/1.1 %d %s\r\nConnection: close\r\n\r\n"
-                           "<html><head>"
-                           "<title>404 Not Found</title>"
-                           "</head><body>"
-                           "<h1>Not Found</h1>"
-                           "<p>The requested URL was not found on this server.</p>"
-                           "</body></html>", (int)statusCode, statusString);
+        int ret = snprintf((char*)p, size,
+"HTTP/1.1 %d %s\r\n"
+"Connection: close\r\n\r\n"
+"<html><head>"
+"<title>404 Not Found</title>"
+"</head><body>"
+"<h1>Not Found</h1>"
+"<p>The requested URL was not found on this server.</p>"
+"</body></html>", (int)statusCode, statusString);
+
         if(ret < 0)
         {
             return -1;
