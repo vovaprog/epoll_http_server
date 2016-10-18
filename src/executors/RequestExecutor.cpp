@@ -182,7 +182,7 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
     {
         if(size > 1)
         {
-            char *cdata = (char*)p;
+            char *cdata = static_cast<char*>(p);
 
             if(size < ExecutorData::REQUEST_BUFFER_SIZE)
             {

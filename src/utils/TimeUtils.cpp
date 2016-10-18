@@ -11,11 +11,11 @@ long long int getMilliseconds()
 int getCurrentTimeString(char *timeBuffer, int timeBufferSize)
 {
     time_t t;
-    struct tm *timeinfo;
+    struct tm timeinfo;
 
-    time(&t);
-    timeinfo = localtime(&t);
-    if(strftime(timeBuffer, timeBufferSize, "%Y%m%d %H:%M:%S", timeinfo) > 0)
+    t = time(nullptr);
+    localtime_r(&t, &timeinfo);
+    if(strftime(timeBuffer, timeBufferSize, "%Y%m%d %H:%M:%S", &timeinfo) > 0)
     {
         return 0;
     }

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <utility>
 
 
 int LogMmap::init(ServerParameters *params)
@@ -144,15 +145,24 @@ void LogMmap::writeLog(const char *prefix, const char* format, va_list args)
 
     getCurrentTimeString(timeBuffer, 50);
 
-    int prefixLength = sprintf((char*)data, "%s %s   ", prefix, timeBuffer);
+    int bytesToWrite = maxMessageSize;
+    int prefixLength = snprintf(static_cast<char*>(data), bytesToWrite, "%s %s   ", prefix, timeBuffer);
 
-    int bytesToWrite = maxMessageSize - prefixLength;
-    int bytesWritten = vsnprintf((char*)data + prefixLength, bytesToWrite, format, args);
-
-    if(bytesWritten >= bytesToWrite)
+    if(prefixLength >= bytesToWrite)
     {
-        bytesWritten = bytesToWrite - 1;
+        int bytesWritten = bytesToWrite - 1;
+        buffer.endWrite(bytesWritten);
     }
+    else
+    {
+        int bytesToWrite = maxMessageSize - prefixLength;
+        int bytesWritten = vsnprintf(static_cast<char*>(data) + prefixLength, bytesToWrite, format, args);
 
-    buffer.endWrite(prefixLength + bytesWritten);
+        if(bytesWritten >= bytesToWrite)
+        {
+            bytesWritten = bytesToWrite - 1;
+        }
+
+        buffer.endWrite(prefixLength + bytesWritten);
+    }
 }

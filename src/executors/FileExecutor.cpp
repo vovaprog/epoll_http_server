@@ -111,7 +111,7 @@ int FileExecutor::createResponse(ExecutorData &data, time_t lastModified)
         char lastModifiedString[80];
         strftime(lastModifiedString, sizeof(lastModifiedString), RFC1123FMT, gmtime(&lastModified));
 
-        int ret = snprintf((char*)p, size,
+        int ret = snprintf(static_cast<char*>(p), size,
 "HTTP/1.1 200 Ok\r\n"
 "Content-Length: %lld\r\n"
 "Last-Modified: %s\r\n"
@@ -140,7 +140,7 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
     void *p;
     int size;
 
-    const char *statusString = httpCode2String((int)statusCode);
+    const char *statusString = httpCode2String(statusCode);
 
     if(statusString == nullptr)
     {
@@ -149,7 +149,7 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
 
     if(data.buffer.startWrite(p, size))
     {
-        int ret = snprintf((char*)p, size,
+        int ret = snprintf(static_cast<char*>(p), size,
 "HTTP/1.1 %d %s\r\n"
 "Connection: close\r\n\r\n"
 "<html><head>"
@@ -157,7 +157,7 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
 "</head><body>"
 "<h1>Not Found</h1>"
 "<p>The requested URL was not found on this server.</p>"
-"</body></html>", (int)statusCode, statusString);
+"</body></html>", statusCode, statusString);
 
         if(ret < 0)
         {

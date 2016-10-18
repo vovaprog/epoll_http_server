@@ -14,8 +14,7 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
 
     numOfPollFds.store(0);
 
-    strcpy(fileNameBuffer, params->rootFolder.c_str());
-    strcat(fileNameBuffer, "/");
+    snprintf(fileNameBuffer, MAX_FILE_NAME, "%s/", params->rootFolder.c_str());
     rootFolderLength = strlen(fileNameBuffer);
 
 

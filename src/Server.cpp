@@ -4,13 +4,12 @@
 #include <LogMmap.h>
 #include <HttpUtils.h>
 
+#include <pthread.h>
+#include <climits>
 #include <mutex>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <pthread.h>
-#include <climits>
-
 
 static std::recursive_mutex *sslMutexes = nullptr;
 bool Server::sslInited = false;
