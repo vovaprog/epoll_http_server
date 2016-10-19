@@ -15,6 +15,8 @@ set(SOURCE
     PollLoopBase.h
     PollLoop.h     PollLoop.cpp
 
+    HttpRequest.h
+
     UwsgiApplicationParameters.h
     ProcessResult.h
     ExecutorType.h
