@@ -1,64 +1,317 @@
+#ifndef HTTP_REQUEST_H
+#define HTTP_REQUEST_H
+
 #include <vector>
 
-class HttpRequest {
+class HttpRequest
+{
 public:
-    enum class ParseResult { finishOk, finishInvalid, needMoreData };
-
-
-    ParseResult startParse(char *data, int size)
+    enum class ParseResult
     {
+        finishOk, finishInvalid, needMoreData
+    };
+
+
+    ParseResult startParse(const char *data, int size)
+    {
+        reset();
+
         this->data = data;
         this->size = size;
         cur = 0;
         state = State::method;
+
+        return parse();
     }
 
-    ParseResult continueParse(int size);
+    ParseResult continueParse(const char *data, int size)
+    {
+        this->data = data;
+        this->size = size;
+
+        return parse();
+    }
+
+    int print()
+    {
+        if(methodLength > 0)
+        {
+            printf("method: [%.*s]\n", methodLength, data + methodStart);
+        }
+        if(urlLength > 0)
+        {
+            printf("url: [%.*s]\n", urlLength, data + urlStart);
+        }
+        if(urlParametersLength > 0)
+        {
+            printf("url params: [%.*s]\n", urlParametersLength, data + urlParametersStart);
+        }
+        for(const Header &head : headers)
+        {
+            printf("[%.*s]: [%.*s]\n", head.key.length, data + head.key.start, head.value.length, data + head.value.start);
+        }
+
+        return 0;
+    }
 
 protected:
 
-    enum class State { method };
-    enum class CharClass { letters };
-    enum class ReadResult { invalid, size, space, endOfLine };
+    enum class State
+    {
+        method, spaceAfterMethod, url, urlParameters, spaceAfterUrl, headerKey, headerSpace, headerValue, headerLineBreak
+    };
+    enum class ReadResult
+    {
+        invalid, needMoreData, ok, question, endOfHeaders
+    };
 
-    ReadResult readData(CharClass stopCharClass, CharClass checkCharClass, int &length)
+
+    void reset()
+    {
+        cur = 0;
+        data = nullptr;
+        size = 0;
+        state = State::method;
+
+        methodStart = 0;
+        methodLength = 0;
+
+        urlStart = 0;
+        urlLength = 0;
+
+        urlParametersStart = 0;
+        urlParametersLength = 0;
+
+        curKey.start = 0;
+        curKey.length = 0;
+
+        headers.clear();
+    }
+
+
+    ReadResult readMethod(int &length)
     {
         int i = cur;
+
         while(i < size)
         {
-            if(stopCharClass == CharClass::space)
+            if(data[i] >= 'A' && data[i] <= 'Z')
             {
-                if(data[i]==' ' || data[i]='\r' || data[i]=='\n')
-                {
-                    break;
-                }
+                ++i;
             }
-            else if(stopCharClass == CharClass::spaceAndQuestion)
+            else if(data[i] == ' ')
             {
-
+                length = i - cur;
+                return ReadResult::ok;
             }
-
-            if(checkCharClass == CharClass::letters &&
-              !((data[i]>='A' && data[i]<='Z') || (data[i]>='a' && data[i]<='z')))
+            else
             {
                 return ReadResult::invalid;
             }
-            ++i;
         }
-        length = cur - i;
+        return ReadResult::needMoreData;
+    }
+
+    ReadResult readSpaces(int &length)
+    {
+        int i;
+
+        for(i = cur; i < size && data[i] == ' '; ++i);
+
         if(i == size)
         {
-            return ReadResult::size;
+            return ReadResult::needMoreData;
         }
-        else if(data[i] == ' ')
+        else if(i == '\r' || i == '\n')
         {
-            return ReadResult::space;
+            return ReadResult::invalid;
+        }
+        else
+        {
+            length = i - cur;
+            return ReadResult::ok;
+        }
+    }
+
+    ReadResult readUrl(int &length)
+    {
+        int i = cur;
+
+        while(i < size)
+        {
+            if((data[i] >= 'a' && data[i] <= 'z') ||
+                    (data[i] >= 'A' && data[i] <= 'Z') ||
+                    (data[i] >= '0' && data[i] <= '9') ||
+                    data[i] == '/' || data[i] == '.' || data[i] == '_' ||
+                    data[i] == '=' || data[i] == '-')
+            {
+                ++i;
+            }
+            else if(data[i] == ' ')
+            {
+                length = i - cur;
+                return ReadResult::ok;
+            }
+            else if(data[i] == '?')
+            {
+                length = i - cur;
+                return ReadResult::question;
+            }
+            else
+            {
+                return ReadResult::invalid;
+            }
+        }
+        return ReadResult::needMoreData;
+    }
+
+    ReadResult readUrlParameters(int &length)
+    {
+        int i;
+
+        for(i = cur; i < size && data[i] != ' '; ++i);
+
+        if(i == size)
+        {
+            return ReadResult::needMoreData;
         }
         else if(data[i] == '\r' || data[i] == '\n')
         {
-            return ReadResult::endOfLine;
+            return ReadResult::invalid;
         }
-        return ReadResult::invalid;
+        else
+        {
+            length = i - cur;
+            return ReadResult::ok;
+        }
+    }
+
+    ReadResult readToNextLine(int &length)
+    {
+        int i;
+
+        for(i = cur; i < size && data[i] != '\r' && data[i] != '\n'; ++i);
+
+        if(i == size)
+        {
+            return ReadResult::needMoreData;
+        }
+
+        int lineBreakCounter = 0;
+        for(; i < size && (data[i] == '\r' || data[i] == '\n'); ++i)
+        {
+            if(data[i] == '\n')
+            {
+                ++lineBreakCounter;
+            }
+        }
+
+        if(lineBreakCounter > 1)
+        {
+            return ReadResult::endOfHeaders;
+        }
+
+        if(i == size)
+        {
+            return ReadResult::needMoreData;
+        }
+
+        length = i - cur;
+        return ReadResult::ok;
+    }
+
+    ReadResult readHeaderKey(int &length)
+    {
+        int i = cur;
+
+        while(i < size)
+        {
+            if((data[i] >= 'A' && data[i] <= 'Z') ||
+                    (data[i] >= 'a' && data[i] <= 'z') ||
+                    data[i] == '-')
+            {
+                ++i;
+            }
+            else if(data[i] == ':')
+            {
+                length = i - cur;
+                return ReadResult::ok;
+            }
+            else
+            {
+                return ReadResult::invalid;
+            }
+        }
+        return ReadResult::needMoreData;
+    }
+
+    ReadResult readHeaderSpace(int &length)
+    {
+        int i = cur;
+
+        while(i < size)
+        {
+            if(data[i] == ':' || data[i] == ' ')
+            {
+                ++i;
+            }
+            else if(data[i] == '\r' || data[i] == '\n')
+            {
+                return ReadResult::invalid;
+            }
+            else
+            {
+                length = i - cur;
+                return ReadResult::ok;
+            }
+        }
+        return ReadResult::needMoreData;
+    }
+
+    ReadResult readHeaderValue(int &length)
+    {
+        int i = cur;
+
+        while(i < size)
+        {
+            if(data[i] != '\r' && data[i] != '\n')
+            {
+                ++i;
+            }
+            else
+            {
+                length = i - cur;
+                return ReadResult::ok;
+            }
+        }
+        return ReadResult::needMoreData;
+    }
+
+    ReadResult readHeaderLineBreak(int &length)
+    {
+        int i = cur;
+
+        int lineBreakCounter = 0;
+        for(; i < size && (data[i] == '\r' || data[i] == '\n'); ++i)
+        {
+            if(data[i] == '\n')
+            {
+                ++lineBreakCounter;
+            }
+        }
+
+        if(lineBreakCounter > 1)
+        {
+            return ReadResult::endOfHeaders;
+        }
+
+        if(i == size)
+        {
+            return ReadResult::needMoreData;
+        }
+
+        length = i - cur;
+        return ReadResult::ok;
     }
 
     ParseResult parse()
@@ -66,167 +319,163 @@ protected:
         ReadResult result;
         int length;
 
-        if(state == State::method)
+        while(true)
         {
-            result = readTillSpace(CharClass::letters, length);
-            if(result == ReadResult::space)
+            if(state == State::method)
             {
-                methodStart = cur;
-                methodLength = length;
-
-                cur += length;
-
-                result = readSpaces();
-                if(result == ReadResult::word)
+                result = readMethod(length);
+                if(result == ReadResult::ok)
                 {
+                    methodStart = cur;
+                    methodLength = length;
+
+                    cur += length;
+                    state = State::spaceAfterMethod;
+                }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
+            }
+            else if(state == State::spaceAfterMethod)
+            {
+                result = readSpaces(length);
+
+                if(result == ReadResult::ok)
+                {
+                    cur += length;
                     state = State::url;
                 }
-                else if(result == ReadResult::size)
-                {
-                    return ParseResult::needMoreData;
-                }
-                else
-                {
-                    return ParseResult::finishInvalid;
-                }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
             }
-            else if(result == size)
+            else if(state == State::url)
             {
-                return ParseResult::needMoreData;
-            }
-            else
-            {
-                return ParseResult::finishInvalid;
-            }
-        }
-        else if(state == State::url)
-        {
+                result = readUrl(length);
 
-            result = readData(CharClass::spaceAndQuestion, CharClass::url, length);
-            if(result == ReadResult::space || result == ReadResult::question)
-            {
-                urlStart = cur;
-                urlLength = length;
-
-                cur += length;
-
-                if(result == ReadResult::space)
+                if(result == ReadResult::ok || result == ReadResult::question)
                 {
-                    result = readToNextLine();
-                    if(result == ReadResult::word)
+                    urlStart = cur;
+                    urlLength = length;
+
+                    cur += length;
+                    if(result == ReadResult::ok)
                     {
-                        state = State::headerKey;
-                    }
-                    else if(result == ReadResult::size)
-                    {
-                        return ParseResult::needMoreData;
+                        state = State::spaceAfterUrl;
                     }
                     else
                     {
-                        return ParseResult::finishInvalid;
+                        state = State::urlParameters;
                     }
                 }
-                else if(result == ReadResult::question)
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
+            }
+            else if(state == State::urlParameters)
+            {
+                result = readUrlParameters(length);
+
+                if(result == ReadResult::ok)
                 {
-                    state = State::urlParameters;
+                    urlParametersStart = cur;
+                    urlParametersLength = length;
+
+                    cur += length;
+                    state = State::spaceAfterUrl;
                 }
             }
-            else if(result == ReadResult::size)
+            else if(state == State::spaceAfterUrl)
             {
-                return ParseResult::needMoreData;
-            }
-            else
-            {
-                return ParseResult::finishInvalid;
-            }
-        }
-        else if(state == State::urlParameters)
-        {
-            result = readData(CharClass::space, CharClass::url, length);
+                result = readToNextLine(length);
 
-            if(result == ReadResult::space)
-            {
-                urlParametersStart = cur;
-                urlParametersLength = length;
-
-                result = readToNextLine();
-                if(result == ReadResult::word)
+                if(result == ReadResult::ok)
                 {
+                    cur += length;
                     state = State::headerKey;
                 }
-                else if(result == ReadResult::size)
-                {
-                    return ParseResult::needMoreData;
-                }
-                else
-                {
-                    return ParseResult::finishInvalid;
-                }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
             }
-        }
-        else if(state == State::headerKey)
-        {
-            result = readData(CharClass::colon, CharClass::headerKey, length);
-            if(result == CharClass::colon)
+            else if(state == State::headerKey)
             {
-                curKey.start = cur;
-                curKey.length = length;
+                result = readHeaderKey(length);
 
-                int i;
-                for(i=0;i<size && (data[i]==':' || data[i] ==' ');++i);
-
-                if(i==size)
+                if(result == ReadResult::ok)
                 {
-                    return ParseResult::needMoreData;
+                    curKey.start = cur;
+                    curKey.length = length;
+
+                    cur += length;
+                    state = State::headerSpace;
                 }
-                else
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
+            }
+            else if(state == State::headerSpace)
+            {
+                result = readHeaderSpace(length);
+
+                if(result == ReadResult::ok)
                 {
-                    cur = i;
+                    cur += length;
                     state = State::headerValue;
                 }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
             }
-            else if(result == ReadResult::size)
+            else if(state == State::headerValue)
             {
-                return ParseResult::needMoreData;
-            }
-            else
-            {
-                return ParseResult::finishInvalid;
-            }
-        }
-        else if(state == State::headerValue)
-        {
-            result = readData(CharClass::endOfLine, CharClass::notEndOfLine, length);
-            if(result == CharClass::endOfLine)
-            {
-                Header h;
-                h.key = curKey;
-                h.value.start = cur;
-                h.value.length = length;
-                headers.push_back(h);
-            }
-        }
+                result = readHeaderValue(length);
 
-    }
+                if(result == ReadResult::ok)
+                {
+                    Header h;
+                    h.key = curKey;
+                    h.value.start = cur;
+                    h.value.length = length;
+                    headers.push_back(h);
+
+                    cur += length;
+                    state = State::headerLineBreak;
+                }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
+            }
+            else if(state == State::headerLineBreak)
+            {
+                result = readHeaderLineBreak(length);
+
+                if(result == ReadResult::ok)
+                {
+                    cur += length;
+                    state = State::headerKey;
+                }
+                else if(result == ReadResult::endOfHeaders)
+                {
+                    return ParseResult::finishOk;
+                }
+                else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
+                else return ParseResult::finishInvalid;
+            }
+        }
+    }    
 
     int cur = 0;
-    char *data;
-    int size;
-    State state;
+    const char *data = nullptr;
+    int size = 0;
+    State state = State::method;
 
-    int methodStart;
-    int methodLength;
+    int methodStart = 0;
+    int methodLength = 0;
 
-    int urlStart;
-    int urlLength;
+    int urlStart = 0;
+    int urlLength = 0;
 
-    int urlParametersStart;
-    int urlParametersLength;
+    int urlParametersStart = 0;
+    int urlParametersLength = 0;
 
     struct Field
     {
-        int start;
-        int length;
+        int start = 0;
+        int length = 0;
     };
 
     struct Header
@@ -239,4 +488,6 @@ protected:
 
     std::vector<Header> headers;
 };
+
+#endif // HTTP_REQUEST_H
 
