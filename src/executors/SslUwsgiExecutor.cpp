@@ -8,6 +8,6 @@
 
 ssize_t SslUwsgiExecutor::writeFd0(ExecutorData &data, const void *buf, size_t count, int &errorCode)
 {
-    return sslWriteFd0(this, data, buf, count, errorCode);
+    return sslWriteFd0(this, data, buf, count, errorCode, log);
 }
 

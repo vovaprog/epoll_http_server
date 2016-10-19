@@ -80,7 +80,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
             }
             else
             {
-                log->error("SSL_write failed: %d\n", error);
+                log->error("SSL_write failed. result: %d   error: %d   errno: %d   strerror: %s\n", bytesWritten, error, errno, strerror(errno));
                 return ProcessResult::removeExecutor;
             }
         }
@@ -109,6 +109,6 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 
 ssize_t SslFileExecutor::writeFd0(ExecutorData &data, const void *buf, size_t count, int &errorCode)
 {
-    return sslWriteFd0(this, data, buf, count, errorCode);
+    return sslWriteFd0(this, data, buf, count, errorCode, log);
 }
 

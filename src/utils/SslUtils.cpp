@@ -1,12 +1,13 @@
 #include <ExecutorData.h>
 #include <PollLoopBase.h>
 #include <Executor.h>
+#include <Log.h>
 
 #include <errno.h>
 #include <openssl/ssl.h>
 #include <sys/epoll.h>
 
-ssize_t sslWriteFd0(Executor *exec, ExecutorData &data, const void *buf, size_t count, int &errorCode)
+ssize_t sslWriteFd0(Executor *exec, ExecutorData &data, const void *buf, size_t count, int &errorCode, Log *log)
 {
 	int result = SSL_write(data.ssl, buf, count);
 
@@ -35,6 +36,7 @@ ssize_t sslWriteFd0(Executor *exec, ExecutorData &data, const void *buf, size_t 
 		}
 		else
 		{
+            log->error("SSL_write failed. return: %d   error: %d   errno: %d   strerror: %s\n", result, error, errno, strerror(errno));
 			errorCode = EINVAL;
 		}
 	}
