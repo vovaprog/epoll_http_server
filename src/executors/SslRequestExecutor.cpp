@@ -173,7 +173,7 @@ ssize_t SslRequestExecutor::readFd0(ExecutorData &data, void *buf, size_t count,
         else
         {
             errorCode = EINVAL;
-            log->warning("SSL_read failed. result: %d   error: %d   errno: %d   strerror: %s\n", result, error, errno, strerror(errno));
+            log->error("SSL_read failed. result: %d   error: %d   errno: %d   strerror: %s\n", result, error, errno, strerror(errno));
         }
     }
 
