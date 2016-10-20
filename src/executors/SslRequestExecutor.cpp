@@ -21,6 +21,7 @@ int SslRequestExecutor::up(ExecutorData &data)
 
     if(sslInit(data) != 0)
     {
+        log->warning("SslRequestExecutor::up sslInit failed\n");
         return -1;
     }
 
@@ -30,6 +31,7 @@ int SslRequestExecutor::up(ExecutorData &data)
     {
         if(loop->addPollFd(data, data.fd0, EPOLLIN) != 0)
         {
+            log->warning("SslRequestExecutor::up addPollFd failed\n");
             return -1;
         }
         data.state = ExecutorData::State::readRequest;
@@ -40,6 +42,7 @@ int SslRequestExecutor::up(ExecutorData &data)
     }
     else
     {
+        log->warning("SslRequestExecutor::up handleHandshake failed\n");
         return -1;
     }
 

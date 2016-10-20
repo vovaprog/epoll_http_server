@@ -24,16 +24,19 @@ int UwsgiExecutor::up(ExecutorData &data)
 
     if(data.fd1 < 0)
     {
+        log->warning("UwsgiExecutor::up socketConnectNonBlock failed\n");
         return -1;
     }
 
     if(loop->addPollFd(data, data.fd1, EPOLLOUT) != 0)
     {
+        log->warning("UwsgiExecutor::up addPollFd failed\n");
         return -1;
     }
 
     if(loop->removePollFd(data, data.fd0) != 0)
     {
+        log->warning("UwsgiExecutor::up removePollFd failed\n");
         return -1;
     }
 
@@ -112,10 +115,12 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
 
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
             {
+                log->error("UwsgiExecutor::process_forwardRequest addPollFd failed\n");
                 return ProcessResult::removeExecutorError;
             }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
+                log->error("UwsgiExecutor::process_forwardRequest editPollFd failed\n");
                 return ProcessResult::removeExecutorError;
             }
             return ProcessResult::ok;
@@ -244,7 +249,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
     }
     else
     {
-        return ProcessResult::removeExecutorError;
+        return ProcessResult::removeExecutorOk;
     }
 }
 
@@ -264,6 +269,7 @@ ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
     }
     else
     {
+        log->error("UwsgiExecutor::process_waitConnect socketConnectNonBlockCheck failed\n");
         return ProcessResult::removeExecutorError;
     }
 }
