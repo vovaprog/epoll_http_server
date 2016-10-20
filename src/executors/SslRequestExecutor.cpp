@@ -125,20 +125,10 @@ ProcessResult SslRequestExecutor::process(ExecutorData &data, int fd, int events
     {
         return process_readRequest(data);
     }
-    if((events & EPOLLHUP) != 0 && fd == data.fd0)
-    {
-        log->info("client disconnected\n");
-        return ProcessResult::removeExecutor;
-    }
-    if((events & EPOLLERR) != 0 && fd == data.fd0)
-    {
-        log->warning("EPOLLERR on socket fd\n");
-        return ProcessResult::removeExecutor;
-    }
 
     log->warning("invalid process call (sslRequest). data.state: %d   fd0: %s   events: %d\n",
                  (int)data.state, (fd == data.fd0) ? "true" : "false" , events);
-    return ProcessResult::removeExecutor;
+    return ProcessResult::removeExecutorError;
 }
 
 
@@ -189,7 +179,7 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
     {
         if(loop->editPollFd(data, data.fd0, EPOLLIN) != 0)
         {
-            return ProcessResult::removeExecutor;
+            return ProcessResult::removeExecutorError;
         }
         data.state = ExecutorData::State::readRequest;
         return ProcessResult::ok;
@@ -201,7 +191,7 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
     }
     else
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 }
 
@@ -210,7 +200,7 @@ ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
 {
     if(readRequest(data) != 0)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 
     ParseRequestResult parseResult = parseRequest(data);
@@ -225,7 +215,7 @@ ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
     }
     else if(parseResult == ParseRequestResult::invalid)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 
     return ProcessResult::ok;

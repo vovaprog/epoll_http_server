@@ -74,7 +74,7 @@ ProcessResult UwsgiExecutor::process(ExecutorData &data, int fd, int events)
     }
 
     loop->log->warning("invalid process call (uwsgi)\n");
-    return ProcessResult::removeExecutor;
+    return ProcessResult::removeExecutorError;
 }
 
 
@@ -96,8 +96,8 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
             }
             else
             {
-                log->error("sendfile failed: %s\n", strerror(errno));
-                return ProcessResult::removeExecutor;
+                log->error("write failed: %s\n", strerror(errno));
+                return ProcessResult::removeExecutorError;
             }
         }
         data.retryCounter = 0;
@@ -112,11 +112,11 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
 
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
             {
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
             return ProcessResult::ok;
         }
@@ -126,7 +126,7 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
     else
     {
         loop->log->error("buffer.startRead failed\n");
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 }
 
@@ -157,7 +157,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
             else
             {
                 log->error("UwsgiExecutor::process_forwardResponseRead   read failed: %s\n", strerror(errno));
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
         }
         else
@@ -194,7 +194,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
             else
             {
                 log->error("write failed: %s\n", strerror(errorCode));
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
         }
         data.retryCounter = 0;
@@ -226,7 +226,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
             else
             {
                 log->error("write failed: %s\n", strerror(errorCode));
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
         }
         data.retryCounter = 0;
@@ -235,7 +235,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
 
         if(bytesWritten == size && !data.buffer.readAvailable())
         {
-            return ProcessResult::removeExecutor;
+            return ProcessResult::removeExecutorOk;
         }
         else
         {
@@ -244,7 +244,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
     }
     else
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 }
 
@@ -264,6 +264,6 @@ ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
     }
     else
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 }

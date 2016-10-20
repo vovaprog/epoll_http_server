@@ -4,7 +4,7 @@
 
 enum class ProcessResult
 {
-    ok, removeExecutor, shutdown
+    ok, removeExecutorOk, removeExecutorError, shutdown
 };
 
 

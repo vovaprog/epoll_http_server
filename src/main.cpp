@@ -34,8 +34,6 @@ void testHttpRequest()
 
 int main(int argc, char** argv)
 {
-    testHttpRequest();
-
     const char *fileName = "./config.xml";
 
     printf("USAGE: http_server config_file_name (default: %s)\n", fileName);

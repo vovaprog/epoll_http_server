@@ -40,7 +40,7 @@ ProcessResult RequestExecutor::process(ExecutorData &data, int fd, int events)
     }
 
     log->warning("invalid process call (request)\n");
-    return ProcessResult::removeExecutor;
+    return ProcessResult::removeExecutorError;
 }
 
 
@@ -291,7 +291,7 @@ ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecut
     data.pExecutor = pExecutor;
     if(pExecutor->up(data) != 0)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
     else
     {
@@ -304,7 +304,7 @@ ProcessResult RequestExecutor::process_readRequest(ExecutorData &data)
 {
     if(readRequest(data) != 0)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 
     ParseRequestResult parseResult = parseRequest(data);
@@ -319,7 +319,7 @@ ProcessResult RequestExecutor::process_readRequest(ExecutorData &data)
     }
     else if(parseResult == ParseRequestResult::invalid)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 
     return ProcessResult::ok;

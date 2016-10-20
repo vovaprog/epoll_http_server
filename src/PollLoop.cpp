@@ -99,8 +99,13 @@ int PollLoop::run()
                 {
                     ProcessResult result = execData.pExecutor->process(execData, pollData->fd, events[i].events);
 
-                    if(result == ProcessResult::removeExecutor)
+                    if(result == ProcessResult::removeExecutorOk)
                     {
+                        removeExecutorData(&execData);
+                    }
+                    else if(result == ProcessResult::removeExecutorError)
+                    {
+                        execData.writeLog(log, Log::Level::warning, "removeExecutorError");
                         removeExecutorData(&execData);
                     }
                     else if(result == ProcessResult::shutdown)

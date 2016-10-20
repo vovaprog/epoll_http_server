@@ -33,7 +33,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 
             if(bytesRead < 0)
             {
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
             else if(bytesRead == 0)
             {
@@ -60,7 +60,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
 
             if(data.bytesToSend == 0)
             {
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorOk;
             }
         }
         else
@@ -75,13 +75,13 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
             {
                 if(loop->editPollFd(data, data.fd0, EPOLLIN | EPOLLOUT) != 0)
                 {
-                    return ProcessResult::removeExecutor;
+                    return ProcessResult::removeExecutorError;
                 }
             }
             else
             {
                 log->error("SSL_write failed. result: %d   error: %d   errno: %d   strerror: %s\n", bytesWritten, error, errno, strerror(errno));
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
         }
     }
@@ -90,7 +90,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
         if(data.fd1 > 0)
         {
             log->error("buffer.startRead failed\n");
-            return ProcessResult::removeExecutor;
+            return ProcessResult::removeExecutorError;
         }
     }
 

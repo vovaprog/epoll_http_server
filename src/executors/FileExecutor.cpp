@@ -95,7 +95,7 @@ ProcessResult FileExecutor::process(ExecutorData &data, int fd, int events)
     }
 
     log->warning("invalid process call (file)\n");
-    return ProcessResult::removeExecutor;
+    return ProcessResult::removeExecutorError;
 }
 
 
@@ -189,7 +189,7 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
         {
             if(errorCode != EWOULDBLOCK && errorCode != EAGAIN && errorCode != EINTR)
             {
-                return ProcessResult::removeExecutor;
+                return ProcessResult::removeExecutorError;
             }
             else
             {
@@ -207,7 +207,7 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
 
                 if(data.state == ExecutorData::State::sendError)
                 {
-                    return ProcessResult::removeExecutor;
+                    return ProcessResult::removeExecutorOk;
                 }
                 else
                 {
@@ -220,7 +220,7 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
     }
     else
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorError;
     }
 }
 
@@ -238,7 +238,7 @@ ProcessResult FileExecutor::process_sendFile(ExecutorData &data)
         else
         {
             log->error("sendfile failed: %s\n", strerror(errno));
-            return ProcessResult::removeExecutor;
+            return ProcessResult::removeExecutorError;
         }
 
     }
@@ -249,7 +249,7 @@ ProcessResult FileExecutor::process_sendFile(ExecutorData &data)
 
     if(data.bytesToSend == 0)
     {
-        return ProcessResult::removeExecutor;
+        return ProcessResult::removeExecutorOk;
     }
 
     return ProcessResult::ok;
