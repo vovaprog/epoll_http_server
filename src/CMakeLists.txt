@@ -15,7 +15,7 @@ set(SOURCE
     PollLoopBase.h
     PollLoop.h     PollLoop.cpp
 
-    HttpRequest.h
+    HttpRequest.h HttpRequest.cpp
 
     UwsgiApplicationParameters.h
     ProcessResult.h
@@ -56,4 +56,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread")
 add_executable(epoll_http_server ${SOURCE})
 
 target_link_libraries(epoll_http_server ssl crypto tinyxml2)
+
+add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp utils/HttpUtils.h utils/HttpUtils.cpp)
+
 
