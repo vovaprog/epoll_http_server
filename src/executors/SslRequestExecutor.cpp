@@ -104,6 +104,10 @@ SslRequestExecutor::HandleHandshakeResult SslRequestExecutor::handleHandshake(Ex
         {
             loop->editPollFd(data, data.fd0, EPOLLOUT);
         }
+
+        log->debug("handleHandshake SSL_ERROR_WANT_WRITE\n");
+
+        return HandleHandshakeResult::again;
     }
     else if(err == SSL_ERROR_WANT_READ)
     {
@@ -115,19 +119,23 @@ SslRequestExecutor::HandleHandshakeResult SslRequestExecutor::handleHandshake(Ex
         {
             loop->editPollFd(data, data.fd0, EPOLLIN);
         }
+
+        log->debug("handleHandshake SSL_ERROR_WANT_READ\n");
+
+        return HandleHandshakeResult::again;
     }
     else
     {
         log->error("SSL_do_handshake error. return: %d   error: %d   errno: %d   strerror: %s\n", ret, err, errno, strerror(errno));
         return HandleHandshakeResult::error;
     }
-
-    return HandleHandshakeResult::again;
 }
 
 
 ProcessResult SslRequestExecutor::process(ExecutorData &data, int fd, int events)
 {
+    log->debug("SslRequestExecutor::process\n");
+
     if(data.state == ExecutorData::State::sslHandshake && fd == data.fd0)
     {
         return process_handshake(data);
@@ -184,6 +192,8 @@ ssize_t SslRequestExecutor::readFd0(ExecutorData &data, void *buf, size_t count,
 
 ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
 {
+    log->debug("SslRequestExecutor::process_handshake\n");
+
     HandleHandshakeResult result = handleHandshake(data, false);
 
     if(result == HandleHandshakeResult::ok)
@@ -213,6 +223,8 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
 
 ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
 {
+    log->debug("SslRequestExecutor::process_readRequest\n");
+
     if(readRequest(data) != 0)
     {
         log->warning("SslRequestExecutor::process_readRequest readRequest failed\n");
