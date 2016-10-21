@@ -31,6 +31,8 @@ int SslRequestExecutor::up(ExecutorData &data)
 
     if(result == HandleHandshakeResult::ok)
     {
+        log->debug("handleHandshake ok\n");
+
         if(loop->addPollFd(data, data.fd0, EPOLLIN) != 0)
         {
             log->warning("SslRequestExecutor::up addPollFd failed\n");
@@ -40,6 +42,8 @@ int SslRequestExecutor::up(ExecutorData &data)
     }
     else if(result == HandleHandshakeResult::again)
     {
+        log->debug("handleHandshake again\n");
+
         data.state = ExecutorData::State::sslHandshake;
     }
     else
@@ -47,6 +51,8 @@ int SslRequestExecutor::up(ExecutorData &data)
         log->warning("SslRequestExecutor::up handleHandshake failed\n");
         return -1;
     }
+
+    log->debug("SslRequestExecutor::up return 0\n");
 
     return 0;
 }
