@@ -293,6 +293,7 @@ ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecut
     data.pExecutor = pExecutor;
     if(pExecutor->up(data) != 0)
     {
+        log->warning("RequestExecutor::setExecutor up failed\n");
         return ProcessResult::removeExecutorError;
     }
     else

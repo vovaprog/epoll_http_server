@@ -184,6 +184,7 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
     {
         if(loop->editPollFd(data, data.fd0, EPOLLIN) != 0)
         {
+            log->warning("SslRequestExecutor::process_handshake editPollFd failed\n");
             return ProcessResult::removeExecutorError;
         }
         data.state = ExecutorData::State::readRequest;
@@ -191,11 +192,14 @@ ProcessResult SslRequestExecutor::process_handshake(ExecutorData &data)
     }
     else if(result == HandleHandshakeResult::again)
     {
+        log->debug("SslRequestExecutor::process_handshake again\n");
+
         ++data.retryCounter;
         return ProcessResult::ok;
     }
     else
     {
+        log->warning("SslRequestExecutor::process_handshake handleHandshake failed\n");
         return ProcessResult::removeExecutorError;
     }
 }
@@ -205,6 +209,7 @@ ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
 {
     if(readRequest(data) != 0)
     {
+        log->warning("SslRequestExecutor::process_readRequest readRequest failed\n");
         return ProcessResult::removeExecutorError;
     }
 
@@ -220,6 +225,7 @@ ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
     }
     else if(parseResult == ParseRequestResult::invalid)
     {
+        log->warning("SslRequestExecutor::process_readRequest parseRequest failed\n");
         return ProcessResult::removeExecutorError;
     }
 
