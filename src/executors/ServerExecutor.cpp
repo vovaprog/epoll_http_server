@@ -55,6 +55,8 @@ ProcessResult ServerExecutor::process(ExecutorData &data, int fd, int events)
         return ProcessResult::shutdown;
     }
 
+    log->debug("server accepted connection\n");
+
     loop->createRequestExecutor(clientSockFd, ExecutorType::request);
 
     return ProcessResult::ok;

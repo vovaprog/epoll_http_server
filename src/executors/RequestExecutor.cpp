@@ -16,6 +16,8 @@ int RequestExecutor::init(PollLoopBase *loop)
 
 int RequestExecutor::up(ExecutorData &data)
 {
+    log->debug("RequestExecutor up called\n");
+
     data.removeOnTimeout = true;
     data.connectionType = (int)ConnectionType::clear;
 

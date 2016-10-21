@@ -14,6 +14,8 @@ int SslRequestExecutor::init(PollLoopBase *loop)
 
 int SslRequestExecutor::up(ExecutorData &data)
 {
+    log->debug("SslRequestExecutor up called\n");
+
     data.removeOnTimeout = true;
     data.connectionType = (int)ConnectionType::ssl;
 

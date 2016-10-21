@@ -55,6 +55,7 @@ ProcessResult SslServerExecutor::process(ExecutorData &data, int fd, int events)
         return ProcessResult::shutdown;
     }
 
+    log->debug("sslserver accepted connection\n");
 
     loop->createRequestExecutor(clientSockFd, ExecutorType::requestSsl);
 
