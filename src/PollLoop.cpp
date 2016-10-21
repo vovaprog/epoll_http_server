@@ -466,7 +466,9 @@ ExecutorData* PollLoop::createExecutorData()
     emptyExecDatas.pop();
     usedExecDatas.insert(execIndex);
 
-    execDatas[execIndex].createTime = getMilliseconds();
+    long long int curMillis = getMilliseconds();
+    execDatas[execIndex].createTime = curMillis;
+    execDatas[execIndex].lastProcessTime = curMillis;
 
     return &execDatas[execIndex];
 }
