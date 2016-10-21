@@ -35,12 +35,14 @@ public:
 
     int print();
 
+    bool isUrlPrefix(const char *prefix);
+
 
 protected:
 
     enum class State
     {
-        method, spaceAfterMethod, url, urlParameters, spaceAfterUrl, headerKey, headerSpace, headerValue, headerLineBreak, finishOk
+        method, spaceAfterMethod, url, urlParameters, spaceAfterUrl, headerKey, headerSpace, headerValue, headerLineBreak, finishOk, content, invalid
     };
     enum class ReadResult
     {
@@ -58,6 +60,9 @@ protected:
     ReadResult readHeaderLineBreak(int &length);
 
     ParseResult parse();
+    ParseResult postParse();
+
+    int decodeUrl();
 
     void reset()
     {
@@ -74,6 +79,9 @@ protected:
 
         urlParametersStart = 0;
         urlParametersLength = 0;
+
+        contentStart = 0;
+        contentLength = 0;
 
         curKey.start = 0;
         curKey.length = 0;
@@ -99,6 +107,9 @@ protected:
 
     int urlParametersStart = 0;
     int urlParametersLength = 0;
+
+    int contentStart = 0;
+    int contentLength = 0;
 
     struct Field
     {

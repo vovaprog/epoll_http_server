@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 HttpRequest::ParseResult HttpRequest::startParse(const char *data, int size)
@@ -15,7 +16,14 @@ HttpRequest::ParseResult HttpRequest::startParse(const char *data, int size)
     cur = 0;
     state = State::method;
 
-    return parse();
+    ParseResult result = parse();
+
+    if(result != ParseResult::finishOk)
+    {
+        return result;
+    }
+
+    return postParse();
 }
 
 HttpRequest::ParseResult HttpRequest::continueParse(const char *data, int size)
@@ -23,7 +31,25 @@ HttpRequest::ParseResult HttpRequest::continueParse(const char *data, int size)
     this->data = data;
     this->size = size;
 
-    return parse();
+    ParseResult result = parse();
+
+    if(result != ParseResult::finishOk)
+    {
+        return result;
+    }
+
+    return postParse();
+}
+
+
+HttpRequest::ParseResult HttpRequest::postParse()
+{
+    if(decodeUrl() != 0)
+    {
+        state = State::invalid;
+        return ParseResult::finishInvalid;
+    }
+    return ParseResult::finishOk;
 }
 
 
@@ -34,9 +60,15 @@ const char* HttpRequest::getUrl()
         return nullptr;
     }
 
-    if(urlDecoded)
+    return urlBuffer;
+}
+
+
+int HttpRequest::decodeUrl()
+{
+    if(state != State::finishOk)
     {
-        return urlBuffer;
+        return -1;
     }
 
     if(urlLength > 0)
@@ -48,14 +80,13 @@ const char* HttpRequest::getUrl()
         }
         if(percentDecode(data + urlStart, urlBuffer, urlLength) != 0)
         {
-            return nullptr;
+            return -1;
         }
-        urlDecoded = true;
-        return urlBuffer;
+        return 0;
     }
     else
     {
-        return nullptr;
+        return -1;
     }
 }
 
@@ -107,6 +138,32 @@ time_t HttpRequest::getIfModifiedSince()
 }
 
 
+bool HttpRequest::isUrlPrefix(const char *prefix)
+{
+    if(state != State::finishOk)
+    {
+        return false;
+    }
+
+    int ui, pi;
+    for(ui = 0; urlBuffer[ui] == '/'; ++ui);
+    for(pi = 0; prefix[pi] == '/'; ++pi);
+
+    for(; urlBuffer[ui] != 0 && prefix[pi] != 0 && urlBuffer[ui] == prefix[pi]; ++ui, ++pi);
+
+    if((prefix[pi] == 0 || prefix[pi] == '/') && (urlBuffer[ui] == 0 || urlBuffer[ui] == '/' || urlBuffer[ui] == '?'))
+    {
+        return true;
+    }
+    if(pi > 0 && ui > 0 && prefix[pi - 1] == '/' && urlBuffer[ui - 1] == '/')
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
 int HttpRequest::print()
 {
     if(methodLength > 0)
@@ -124,6 +181,10 @@ int HttpRequest::print()
     for(const Header &head : headers)
     {
         printf("[%.*s]: [%.*s]\n", head.key.length, data + head.key.start, head.value.length, data + head.value.start);
+    }
+    if(contentLength > 0)
+    {
+        printf("content (%d): [%.*s]\n", contentLength, contentLength, data + contentStart);
     }
 
     return 0;
@@ -351,6 +412,7 @@ HttpRequest::ReadResult HttpRequest::readHeaderLineBreak(int &length)
 
     if(lineBreakCounter > 1)
     {
+        length = i - cur;
         return ReadResult::endOfHeaders;
     }
 
@@ -483,6 +545,21 @@ HttpRequest::ParseResult HttpRequest::parse()
                 h.value.length = length;
                 headers.push_back(h);
 
+                if(strncasecmp("Content-Length", data + h.key.start, h.key.length) == 0)
+                {
+                    const int BUF_CHARS = 30;
+
+                    if(h.value.length > BUF_CHARS)
+                    {
+                        return ParseResult::finishInvalid;
+                    }
+
+                    char buf[BUF_CHARS + 1];
+                    strncpy(buf, data + h.value.start, h.value.length);
+
+                    contentLength = atoi(buf);
+                }
+
                 cur += length;
                 state = State::headerLineBreak;
             }
@@ -500,11 +577,32 @@ HttpRequest::ParseResult HttpRequest::parse()
             }
             else if(result == ReadResult::endOfHeaders)
             {
-                state = State::finishOk;
-                return ParseResult::finishOk;
+                if(contentLength == 0)
+                {
+                    state = State::finishOk;
+                    return ParseResult::finishOk;
+                }
+                else
+                {
+                    cur += length;
+                    state = State::content;
+                }
             }
             else if(result == ReadResult::needMoreData) return ParseResult::needMoreData;
             else return ParseResult::finishInvalid;
+        }
+        else if(state == State::content)
+        {
+            if(size - cur >= contentLength)
+            {
+                contentStart = cur;
+                state = State::finishOk;
+                return ParseResult::finishOk;
+            }
+            else
+            {
+                return ParseResult::needMoreData;
+            }
         }
         else if(state == State::finishOk)
         {
