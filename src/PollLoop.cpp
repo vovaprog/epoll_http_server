@@ -93,6 +93,7 @@ int PollLoop::run()
             {
                 if(((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR)) && pollData->fd == execData.fd0)
                 {
+                    log->debug("received EPOLLRDHUP or EPOLLERR event on fd\n");
                     removeExecutorData(&execData);
                 }
                 else
@@ -330,6 +331,7 @@ void PollLoop::checkTimeout(long long int curMillis)
             {
                 //can't remove here, because removeExecutorData modifies usedExecDatas
                 removeExecDatas.push_back(i);
+                execDatas[i].writeLog(log, Log::Level::debug, "timeout remove executor");
             }
         }
     }
@@ -472,6 +474,8 @@ ExecutorData* PollLoop::createExecutorData()
 
 void PollLoop::removeExecutorData(ExecutorData *execData)
 {
+    execData->writeLog(log, Log::Level::debug, "remove executor");
+
     if(execData->pollIndexFd0 >= 0)
     {
         emptyPollDatas.push(execData->pollIndexFd0);
