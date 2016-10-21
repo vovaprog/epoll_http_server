@@ -23,9 +23,7 @@ public:
     };
 
 
-    ParseResult startParse(const char *data, int size);
-
-    ParseResult continueParse(const char *data, int size);
+    ParseResult parse(const char *data, int size);
 
     const char* getUrl();
 
@@ -59,10 +57,12 @@ protected:
     ReadResult readHeaderValue(int &length);
     ReadResult readHeaderLineBreak(int &length);
 
-    ParseResult parse();
+    ParseResult parseInternal();
     ParseResult postParse();
 
     int decodeUrl();
+
+public:
 
     void reset()
     {

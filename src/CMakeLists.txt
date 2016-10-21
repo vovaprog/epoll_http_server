@@ -34,6 +34,7 @@ set(SOURCE
     executors/ServerExecutor.h     executors/ServerExecutor.cpp
     executors/SslServerExecutor.h  executors/SslServerExecutor.cpp
     executors/RequestExecutor.h    executors/RequestExecutor.cpp
+    executors/RequestExecutor2.h    executors/RequestExecutor2.cpp
     executors/FileExecutor.h       executors/FileExecutor.cpp
     executors/NewFdExecutor.h      executors/NewFdExecutor.cpp
     executors/SslRequestExecutor.h executors/SslRequestExecutor.cpp

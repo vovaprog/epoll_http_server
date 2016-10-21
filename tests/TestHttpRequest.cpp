@@ -23,14 +23,15 @@
         HttpRequest request;
 
         int startLen = 50;
-        HttpRequest::ParseResult result = request.startParse(data, 50);
+        HttpRequest::ParseResult result = request.parse(data, 50);
 
         for(int i=startLen + 1;i<=dataLen && result != HttpRequest::ParseResult::finishOk;++i)
         {
-            result = request.continueParse(data, i);
+            result = request.parse(data, i);
         }
 
-        result = request.startParse(data, dataLen);
+        request.reset();
+        result = request.parse(data, dataLen);
 
         if(result == HttpRequest::ParseResult::finishOk)
         {
@@ -118,7 +119,8 @@
 
         dataLen = strlen(dataPost);
 
-        result = request.startParse(dataPost, dataLen);
+        request.reset();
+        result = request.parse(dataPost, dataLen);
 
         if(result == HttpRequest::ParseResult::finishOk)
         {

@@ -5,7 +5,7 @@
 
 #include <NewFdExecutor.h>
 #include <ServerExecutor.h>
-#include <RequestExecutor.h>
+#include <RequestExecutor2.h>
 #include <FileExecutor.h>
 #include <UwsgiExecutor.h>
 #include <SslServerExecutor.h>
@@ -82,7 +82,7 @@ protected:
     SslServerExecutor sslServerExecutor;
     SslFileExecutor sslFileExecutor;
     SslUwsgiExecutor sslUwsgiExecutor;
-    RequestExecutor requestExecutor;
+    RequestExecutor2 requestExecutor;
     SslRequestExecutor sslRequestExecutor;
     FileExecutor fileExecutor;
     UwsgiExecutor uwsgiExecutor;

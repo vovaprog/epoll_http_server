@@ -7,31 +7,12 @@
 #include <stdlib.h>
 
 
-HttpRequest::ParseResult HttpRequest::startParse(const char *data, int size)
-{
-    reset();
-
-    this->data = data;
-    this->size = size;
-    cur = 0;
-    state = State::method;
-
-    ParseResult result = parse();
-
-    if(result != ParseResult::finishOk)
-    {
-        return result;
-    }
-
-    return postParse();
-}
-
-HttpRequest::ParseResult HttpRequest::continueParse(const char *data, int size)
+HttpRequest::ParseResult HttpRequest::parse(const char *data, int size)
 {
     this->data = data;
     this->size = size;
 
-    ParseResult result = parse();
+    ParseResult result = parseInternal();
 
     if(result != ParseResult::finishOk)
     {
@@ -151,13 +132,29 @@ bool HttpRequest::isUrlPrefix(const char *prefix)
 
     for(; urlBuffer[ui] != 0 && prefix[pi] != 0 && urlBuffer[ui] == prefix[pi]; ++ui, ++pi);
 
-    if((prefix[pi] == 0 || prefix[pi] == '/') && (urlBuffer[ui] == 0 || urlBuffer[ui] == '/' || urlBuffer[ui] == '?'))
+    if(prefix[pi] == 0)
     {
-        return true;
+        if(urlBuffer[ui] == '/' || urlBuffer[ui] == 0)
+        {
+            return true;
+        }
+        else
+        {
+            if(pi > 0 && ui > 0 && prefix[pi - 1]  == '/' && urlBuffer[ui - 1] == '/') return true;
+            else return false;
+        }
     }
-    if(pi > 0 && ui > 0 && prefix[pi - 1] == '/' && urlBuffer[ui - 1] == '/')
+    else
     {
-        return true;
+        if(prefix[pi] == '/')
+        {
+            if(urlBuffer[ui] == 0) return true;
+            else return false;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     return false;
@@ -426,7 +423,7 @@ HttpRequest::ReadResult HttpRequest::readHeaderLineBreak(int &length)
 }
 
 
-HttpRequest::ParseResult HttpRequest::parse()
+HttpRequest::ParseResult HttpRequest::parseInternal()
 {
     ReadResult result;
     int length;

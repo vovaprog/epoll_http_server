@@ -4,6 +4,7 @@
 #include <TransferRingBuffer.h>
 #include <ConnectionType.h>
 #include <Log.h>
+#include <HttpRequest.h>
 
 #include <sys/types.h>
 #include <openssl/ssl.h>
@@ -61,6 +62,8 @@ struct ExecutorData
 
     static const int MAX_RETRY_COUNTER = 1000;
     int retryCounter = 0;
+
+    HttpRequest request;
 };
 
 #endif
