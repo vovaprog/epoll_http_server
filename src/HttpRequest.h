@@ -61,6 +61,7 @@ protected:
     ParseResult postParse();
 
     int decodeUrl();
+    int checkUrl();
 
 public:
 
@@ -87,8 +88,6 @@ public:
         curKey.length = 0;
 
         headers.clear();
-
-        urlDecoded = false;
     }
 
 
@@ -129,7 +128,6 @@ protected:
 
     char *urlBuffer = nullptr;
     int urlBufferSize = 0;
-    bool urlDecoded = false;
 };
 
 #endif // HTTP_REQUEST_H

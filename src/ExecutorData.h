@@ -27,9 +27,9 @@ struct ExecutorData
 
     enum class State
     {
-        invalid, readRequest, sendResponse, sendFile,
+        invalid, readRequest, sendHeaders, sendFile,
         forwardRequest, forwardResponse, forwardResponseOnlyWrite,
-        sslHandshake, waitConnect, sendError, ok
+        sslHandshake, waitConnect, sendOnlyHeaders, ok
     };
 
     int index = -1;

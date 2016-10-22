@@ -19,10 +19,10 @@ public:
 
 protected:
 
-    int createResponse(ExecutorData &data, time_t lastModified);
-    int createError(ExecutorData &data, int statusCode);
+    int createOkResponse(ExecutorData &data, time_t lastModified);
+    int createResponse(ExecutorData &data, int statusCode);
 
-    virtual ProcessResult process_sendResponseSendData(ExecutorData &data);
+    virtual ProcessResult process_sendHeaders(ExecutorData &data);
 
     virtual ProcessResult process_sendFile(ExecutorData &data);
 };

@@ -30,6 +30,11 @@ HttpRequest::ParseResult HttpRequest::postParse()
         state = State::invalid;
         return ParseResult::finishInvalid;
     }
+    if(checkUrl() != 0)
+    {
+        state = State::invalid;
+        return ParseResult::finishInvalid;
+    }
     return ParseResult::finishOk;
 }
 
@@ -56,7 +61,10 @@ int HttpRequest::decodeUrl()
     {
         if(urlBufferSize < urlLength + 1)
         {
-            delete[] urlBuffer;
+            if(urlBuffer != nullptr)
+            {
+                delete[] urlBuffer;
+            }
             urlBuffer = new char[urlLength + 1];
         }
         if(percentDecode(data + urlStart, urlBuffer, urlLength) != 0)
@@ -69,6 +77,30 @@ int HttpRequest::decodeUrl()
     {
         return -1;
     }
+}
+
+
+int HttpRequest::checkUrl()
+{
+    char prevChar = 0;
+
+    for(int i = 0; urlBuffer[i] != 0 ; ++i)
+    {
+        if(!((urlBuffer[i] >= 'a' && urlBuffer[i] <= 'z') ||
+             (urlBuffer[i] >= 'A' && urlBuffer[i] <= 'Z') ||
+             (urlBuffer[i] >= '0' && urlBuffer[i] <= '9') ||
+              urlBuffer[i] == '/' || urlBuffer[i] == '.' || urlBuffer[i] == '_' ||
+              urlBuffer[i] == '-' || urlBuffer[i] == ' '))
+        {
+            return -1;
+        }
+        if(urlBuffer[i] == '.' && urlBuffer[i] == prevChar)
+        {
+            return -1;
+        }
+        prevChar = urlBuffer[i];
+    }
+    return 0;
 }
 
 

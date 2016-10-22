@@ -7,6 +7,7 @@ std::unordered_map<int, const char*> c2s;
 void initHttpUtils()
 {
     c2s[HttpCode::ok] = "OK";
+    c2s[HttpCode::notModified] = "Not Modified";
     c2s[HttpCode::notFound] = "Not Found";
 }
 

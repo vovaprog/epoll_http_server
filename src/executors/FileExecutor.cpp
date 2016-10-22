@@ -33,7 +33,7 @@ int FileExecutor::up(ExecutorData &data)
 
         if(errno == ENOENT)
         {
-            if(createError(data, HttpCode::notFound) != 0)
+            if(createResponse(data, HttpCode::notFound) != 0)
             {
                 return -1;
             }
@@ -41,7 +41,7 @@ int FileExecutor::up(ExecutorData &data)
             {
                 return -1;
             }
-            data.state = ExecutorData::State::sendError;
+            data.state = ExecutorData::State::sendOnlyHeaders;
             return 0;
         }
 
@@ -62,8 +62,21 @@ int FileExecutor::up(ExecutorData &data)
         return -1;
     }
 
+    if(lastModified <= data.request.getIfModifiedSince())
+    {
+        if(createResponse(data, HttpCode::notModified) != 0)
+        {
+            return -1;
+        }
+        if(loop->editPollFd(data, data.fd0, EPOLLOUT) != 0)
+        {
+            return -1;
+        }
+        data.state = ExecutorData::State::sendOnlyHeaders;
+        return 0;
+    }
 
-    if(createResponse(data, lastModified) != 0)
+    if(createOkResponse(data, lastModified) != 0)
     {
         return -1;
     }
@@ -73,7 +86,7 @@ int FileExecutor::up(ExecutorData &data)
         return -1;
     }
 
-    data.state = ExecutorData::State::sendResponse;
+    data.state = ExecutorData::State::sendHeaders;
 
     return 0;
 }
@@ -81,17 +94,17 @@ int FileExecutor::up(ExecutorData &data)
 
 ProcessResult FileExecutor::process(ExecutorData &data, int fd, int events)
 {
-    if(data.state == ExecutorData::State::sendResponse && fd == data.fd0 && (events & EPOLLOUT))
+    if(data.state == ExecutorData::State::sendHeaders && fd == data.fd0 && (events & EPOLLOUT))
     {
-        return process_sendResponseSendData(data);
+        return process_sendHeaders(data);
     }
     if(data.state == ExecutorData::State::sendFile && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_sendFile(data);
     }
-    if(data.state == ExecutorData::State::sendError && fd == data.fd0 && (events & EPOLLOUT))
+    if(data.state == ExecutorData::State::sendOnlyHeaders && fd == data.fd0 && (events & EPOLLOUT))
     {
-        return process_sendResponseSendData(data);
+        return process_sendHeaders(data);
     }
 
     log->warning("invalid process call (file)\n");
@@ -99,7 +112,7 @@ ProcessResult FileExecutor::process(ExecutorData &data, int fd, int events)
 }
 
 
-int FileExecutor::createResponse(ExecutorData &data, time_t lastModified)
+int FileExecutor::createOkResponse(ExecutorData &data, time_t lastModified)
 {
     data.buffer.clear();
 
@@ -117,7 +130,7 @@ int FileExecutor::createResponse(ExecutorData &data, time_t lastModified)
 "Last-Modified: %s\r\n"
 "Connection: close\r\n\r\n", data.bytesToSend, lastModifiedString);
 
-        if(ret < 0)
+        if(ret >= size)
         {
             return -1;
         }
@@ -133,7 +146,7 @@ int FileExecutor::createResponse(ExecutorData &data, time_t lastModified)
 }
 
 
-int FileExecutor::createError(ExecutorData &data, int statusCode)
+int FileExecutor::createResponse(ExecutorData &data, int statusCode)
 {
     data.buffer.clear();
 
@@ -149,22 +162,42 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
 
     if(data.buffer.startWrite(p, size))
     {
-        int ret = snprintf(static_cast<char*>(p), size,
-"HTTP/1.1 %d %s\r\n"
-"Connection: close\r\n\r\n"
+        int ret;
+
+        if(statusCode == HttpCode::notFound)
+        {
+            const char *html =
 "<html><head>"
 "<title>404 Not Found</title>"
 "</head><body>"
 "<h1>Not Found</h1>"
 "<p>The requested URL was not found on this server.</p>"
-"</body></html>", statusCode, statusString);
+"</body></html>";
 
-        if(ret < 0)
+            int htmlLength = strlen(html);
+
+            ret = snprintf(static_cast<char*>(p), size,
+"HTTP/1.1 %d %s\r\n"
+"Content-Length: %d\r\n"
+"Connection: close\r\n\r\n%s", statusCode, statusString, htmlLength, html);
+
+        }
+        else if(statusCode == HttpCode::notModified)
+        {
+            ret = snprintf(static_cast<char*>(p), size,
+"HTTP/1.1 %d Not Modified\r\n"
+"Connection: close\r\n\r\n", statusCode);
+        }
+        else
         {
             return -1;
         }
-        size = std::min(size, ret);
-        data.buffer.endWrite(size);
+
+        if(ret >= size)
+        {
+            return -1;
+        }        
+        data.buffer.endWrite(ret);
         return 0;
     }
     else
@@ -175,7 +208,7 @@ int FileExecutor::createError(ExecutorData &data, int statusCode)
 }
 
 
-ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
+ProcessResult FileExecutor::process_sendHeaders(ExecutorData &data)
 {
     void *p;
     int size;
@@ -205,7 +238,7 @@ ProcessResult FileExecutor::process_sendResponseSendData(ExecutorData &data)
             {
                 data.buffer.clear();
 
-                if(data.state == ExecutorData::State::sendError)
+                if(data.state == ExecutorData::State::sendOnlyHeaders)
                 {
                     return ProcessResult::removeExecutorOk;
                 }

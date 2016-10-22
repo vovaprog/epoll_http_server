@@ -140,8 +140,6 @@ RequestExecutor2::ParseRequestResult RequestExecutor2::parseRequest(ExecutorData
 
         if(result == HttpRequest::ParseResult::finishOk)
         {
-            data.request.print();
-
             int appIndex = findApplicationIndex(data);
 
             if(appIndex >= 0)
@@ -173,7 +171,16 @@ RequestExecutor2::ParseRequestResult RequestExecutor2::parseRequest(ExecutorData
                 }
                 else
                 {
-                    strcat(loop->fileNameBuffer, url);
+                    int urlLength = strlen(url);
+
+                    if(loop->rootFolderLength + urlLength <= PollLoopBase::MAX_FILE_NAME)
+                    {
+                        strcat(loop->fileNameBuffer, url);
+                    }
+                    else
+                    {
+                        return ParseRequestResult::invalid;
+                    }
                 }
 
                 return ParseRequestResult::file;
@@ -185,6 +192,14 @@ RequestExecutor2::ParseRequestResult RequestExecutor2::parseRequest(ExecutorData
         }
         else
         {
+            char *cp = static_cast<char*>(p);
+            char tempChar = cp[size - 1];
+            cp[size - 1] = 0;
+
+            log->info("invalid request:\n%s\n", cp);
+
+            cp[size - 1] = tempChar;
+
             return ParseRequestResult::invalid;
         }
     }

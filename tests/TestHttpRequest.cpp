@@ -114,8 +114,8 @@
         "Accept-Encoding: gzip, deflate, br\r\n"
         "Connection: keep-alive\r\n"
         "Content-Type: application/x-www-form-urlencoded\r\n"
-        "Content-Length: 135\r\n\r\n"
-        "csrf_token=1477048060.62%23%231996601c52c65c4f50482228054e0df13e8e6b29&date=2016-10-21&id=-1&state=active&task_text=test&submit_edit=ok";
+        "Content-Length: 50\r\n\r\n"
+        "12345678901234567890123456789012345678901234567890";
 
         dataLen = strlen(dataPost);
 
