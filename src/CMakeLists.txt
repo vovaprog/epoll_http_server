@@ -52,8 +52,7 @@ set(SOURCE
     utils/HttpUtils.h          utils/HttpUtils.cpp)
 
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread")
 
 add_executable(epoll_http_server ${SOURCE})
 
