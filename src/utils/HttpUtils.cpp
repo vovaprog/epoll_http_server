@@ -70,5 +70,7 @@ int percentDecode(const char *src, char *dst, int srcLength)
         }
     }
 
+    dst[di] = 0;
+
     return 0;
 }
