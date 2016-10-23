@@ -1,12 +1,11 @@
-#include <RequestExecutor2.h>
+#include <RequestExecutor.h>
 
 #include <UwsgiApplicationParameters.h>
 #include <PollLoopBase.h>
 
-#include <percent_decode.h>
 #include <sys/epoll.h>
 
-int RequestExecutor2::init(PollLoopBase *loop)
+int RequestExecutor::init(PollLoopBase *loop)
 {
     this->loop = loop;
     this->log = loop->log;
@@ -14,7 +13,7 @@ int RequestExecutor2::init(PollLoopBase *loop)
 }
 
 
-int RequestExecutor2::up(ExecutorData &data)
+int RequestExecutor::up(ExecutorData &data)
 {
     log->debug("RequestExecutor up called\n");
 
@@ -36,7 +35,7 @@ int RequestExecutor2::up(ExecutorData &data)
 }
 
 
-ProcessResult RequestExecutor2::process(ExecutorData &data, int fd, int events)
+ProcessResult RequestExecutor::process(ExecutorData &data, int fd, int events)
 {
     if(data.state == ExecutorData::State::readRequest && fd == data.fd0 && (events & EPOLLIN))
     {
@@ -48,7 +47,7 @@ ProcessResult RequestExecutor2::process(ExecutorData &data, int fd, int events)
 }
 
 
-int RequestExecutor2::readRequest(ExecutorData &data)
+int RequestExecutor::readRequest(ExecutorData &data)
 {
     void *p;
     int size;
@@ -99,7 +98,7 @@ int RequestExecutor2::readRequest(ExecutorData &data)
 }
 
 
-ProcessResult RequestExecutor2::setExecutor(ExecutorData &data, Executor *pExecutor)
+ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecutor)
 {
     data.pExecutor = pExecutor;
     if(pExecutor->up(data) != 0)
@@ -114,7 +113,7 @@ ProcessResult RequestExecutor2::setExecutor(ExecutorData &data, Executor *pExecu
 }
 
 
-int RequestExecutor2::findApplicationIndex(ExecutorData &data)
+int RequestExecutor::findApplicationIndex(ExecutorData &data)
 {
     int size = loop->parameters->uwsgiApplications.size();
     for(int i = 0; i < size ;++i)
@@ -129,7 +128,7 @@ int RequestExecutor2::findApplicationIndex(ExecutorData &data)
 }
 
 
-RequestExecutor2::ParseRequestResult RequestExecutor2::parseRequest(ExecutorData &data)
+RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &data)
 {
     void *p;
     int size;
@@ -204,11 +203,11 @@ RequestExecutor2::ParseRequestResult RequestExecutor2::parseRequest(ExecutorData
         }
     }
 
-    return RequestExecutor2::ParseRequestResult::again;
+    return RequestExecutor::ParseRequestResult::again;
 }
 
 
-ProcessResult RequestExecutor2::process_readRequest(ExecutorData &data)
+ProcessResult RequestExecutor::process_readRequest(ExecutorData &data)
 {
     if(readRequest(data) != 0)
     {

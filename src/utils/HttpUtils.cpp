@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-std::unordered_map<int, const char*> c2s;
+static std::unordered_map<int, const char*> c2s;
 
 void initHttpUtils()
 {

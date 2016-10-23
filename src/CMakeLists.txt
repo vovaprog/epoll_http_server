@@ -34,7 +34,6 @@ set(SOURCE
     executors/ServerExecutor.h     executors/ServerExecutor.cpp
     executors/SslServerExecutor.h  executors/SslServerExecutor.cpp
     executors/RequestExecutor.h    executors/RequestExecutor.cpp
-    executors/RequestExecutor2.h    executors/RequestExecutor2.cpp
     executors/FileExecutor.h       executors/FileExecutor.cpp
     executors/NewFdExecutor.h      executors/NewFdExecutor.cpp
     executors/SslRequestExecutor.h executors/SslRequestExecutor.cpp
@@ -44,7 +43,6 @@ set(SOURCE
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h
-    utils/percent_decode.h     utils/percent_decode.c
     utils/FileUtils.h          utils/FileUtils.cpp
     utils/NetworkUtils.h       utils/NetworkUtils.cpp
     utils/TimeUtils.h          utils/TimeUtils.cpp

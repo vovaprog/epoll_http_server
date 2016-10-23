@@ -3,7 +3,7 @@
 
 #include <Executor.h>
 
-class RequestExecutor2: public Executor
+class RequestExecutor: public Executor
 {
 public:
 
