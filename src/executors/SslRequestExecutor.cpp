@@ -21,6 +21,8 @@ int SslRequestExecutor::up(ExecutorData &data)
 
     data.buffer.init(ExecutorData::REQUEST_BUFFER_SIZE);
 
+    data.request.reset();
+
     if(sslInit(data) != 0)
     {
         log->warning("SslRequestExecutor::up sslInit failed\n");
