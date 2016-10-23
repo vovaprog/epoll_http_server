@@ -135,10 +135,23 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
 
     if(data.buffer.startRead(p, size))
     {
+        {
+            char *cp = static_cast<char*>(p);
+            char tempChar = cp[size - 1];
+            cp[size - 1] = 0;
+
+            log->debug("request:\n%s\n", cp);
+
+            cp[size - 1] = tempChar;
+        }
+
+
         HttpRequest::ParseResult result = data.request.parse(static_cast<char*>(p), size);
 
         if(result == HttpRequest::ParseResult::finishOk)
         {
+            log->debug("url: %s\n", data.request.getUrl());
+
             int appIndex = findApplicationIndex(data);
 
             if(appIndex >= 0)
