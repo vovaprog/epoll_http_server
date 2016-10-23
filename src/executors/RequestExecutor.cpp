@@ -140,7 +140,7 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
             char tempChar = cp[size - 1];
             cp[size - 1] = 0;
 
-            log->debug("request:\n%s\n", cp);
+            log->debug("request:\n[[[[[%s]]]]]\n", cp);
 
             cp[size - 1] = tempChar;
         }
@@ -150,7 +150,7 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
 
         if(result == HttpRequest::ParseResult::finishOk)
         {
-            log->debug("url: %s\n", data.request.getUrl());
+            log->debug("url: [%s]\n", data.request.getUrl());
 
             int appIndex = findApplicationIndex(data);
 
