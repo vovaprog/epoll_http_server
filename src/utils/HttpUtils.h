@@ -8,6 +8,4 @@ void initHttpUtils();
 
 const char* httpCode2String(int code);
 
-int percentDecode(const char *src, char *dst, int srcLength);
-
 #endif

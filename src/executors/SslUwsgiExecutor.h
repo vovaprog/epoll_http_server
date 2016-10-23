@@ -7,7 +7,10 @@ class SslUwsgiExecutor: public UwsgiExecutor
 {
 public:
 
-    const char* name() override { return "ssluwsgi"; }
+    const char* name() override
+    {
+        return "ssluwsgi";
+    }
 
 protected:
 

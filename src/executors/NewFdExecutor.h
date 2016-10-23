@@ -12,7 +12,10 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
-    const char* name() override { return "newfd"; }
+    const char* name() override
+    {
+        return "newfd";
+    }
 };
 
 #endif

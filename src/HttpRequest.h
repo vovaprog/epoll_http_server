@@ -63,6 +63,9 @@ protected:
     int decodeUrl();
     int checkUrl();
 
+    static int percentDecode(const char *src, char *dst, int srcLength);
+    static int hex2int(char c);
+
 public:
 
     void reset()

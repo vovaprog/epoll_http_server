@@ -116,7 +116,7 @@ ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecut
 int RequestExecutor::findApplicationIndex(ExecutorData &data)
 {
     int size = loop->parameters->uwsgiApplications.size();
-    for(int i = 0; i < size ;++i)
+    for(int i = 0; i < size ; ++i)
     {
         if(data.request.isUrlPrefix(loop->parameters->uwsgiApplications[i].prefix.c_str()))
         {

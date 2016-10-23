@@ -125,10 +125,10 @@ int FileExecutor::createOkResponse(ExecutorData &data, time_t lastModified)
         strftime(lastModifiedString, sizeof(lastModifiedString), RFC1123FMT, gmtime(&lastModified));
 
         int ret = snprintf(static_cast<char*>(p), size,
-"HTTP/1.1 200 Ok\r\n"
-"Content-Length: %lld\r\n"
-"Last-Modified: %s\r\n"
-"Connection: close\r\n\r\n", data.bytesToSend, lastModifiedString);
+                           "HTTP/1.1 200 Ok\r\n"
+                           "Content-Length: %lld\r\n"
+                           "Last-Modified: %s\r\n"
+                           "Connection: close\r\n\r\n", data.bytesToSend, lastModifiedString);
 
         if(ret >= size)
         {
@@ -167,26 +167,26 @@ int FileExecutor::createResponse(ExecutorData &data, int statusCode)
         if(statusCode == HttpCode::notFound)
         {
             const char *html =
-"<html><head>"
-"<title>404 Not Found</title>"
-"</head><body>"
-"<h1>Not Found</h1>"
-"<p>The requested URL was not found on this server.</p>"
-"</body></html>";
+                "<html><head>"
+                "<title>404 Not Found</title>"
+                "</head><body>"
+                "<h1>Not Found</h1>"
+                "<p>The requested URL was not found on this server.</p>"
+                "</body></html>";
 
             int htmlLength = strlen(html);
 
             ret = snprintf(static_cast<char*>(p), size,
-"HTTP/1.1 %d %s\r\n"
-"Content-Length: %d\r\n"
-"Connection: close\r\n\r\n%s", statusCode, statusString, htmlLength, html);
+                           "HTTP/1.1 %d %s\r\n"
+                           "Content-Length: %d\r\n"
+                           "Connection: close\r\n\r\n%s", statusCode, statusString, htmlLength, html);
 
         }
         else if(statusCode == HttpCode::notModified)
         {
             ret = snprintf(static_cast<char*>(p), size,
-"HTTP/1.1 %d Not Modified\r\n"
-"Connection: close\r\n\r\n", statusCode);
+                           "HTTP/1.1 %d Not Modified\r\n"
+                           "Connection: close\r\n\r\n", statusCode);
         }
         else
         {
@@ -196,7 +196,7 @@ int FileExecutor::createResponse(ExecutorData &data, int statusCode)
         if(ret >= size)
         {
             return -1;
-        }        
+        }
         data.buffer.endWrite(ret);
         return 0;
     }

@@ -327,7 +327,7 @@ void PollLoop::checkTimeout(long long int curMillis)
         if(execDatas[i].removeOnTimeout)
         {
             if((curMillis - execDatas[i].lastProcessTime > parameters->executorTimeoutMillis) ||
-               (curMillis - execDatas[i].createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
+                    (curMillis - execDatas[i].createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
             {
                 //can't remove here, because removeExecutorData modifies usedExecDatas
                 removeExecDatas.push_back(i);
@@ -524,12 +524,12 @@ void PollLoop::logStats()
     char tidBuf[30];
     snprintf(tidBuf, 30, "%llu", tid);
 
-    log->info("[%s]<<<<<<<\n",tidBuf);
+    log->info("[%s]<<<<<<<\n", tidBuf);
 
     for(int execIndex : usedExecDatas)
     {
         execDatas[execIndex].writeLog(log, Log::Level::info, tidBuf);
     }
 
-    log->info("[%s]>>>>>>>\n",tidBuf);
+    log->info("[%s]>>>>>>>\n", tidBuf);
 }

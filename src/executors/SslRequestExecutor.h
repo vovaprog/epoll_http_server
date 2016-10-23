@@ -21,7 +21,10 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
-    const char* name() override { return "sslrequest"; }
+    const char* name() override
+    {
+        return "sslrequest";
+    }
 
 protected:
 

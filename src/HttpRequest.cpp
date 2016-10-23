@@ -1,5 +1,4 @@
 #include <HttpRequest.h>
-#include <HttpUtils.h>
 #include <TimeUtils.h>
 
 #include <stdio.h>
@@ -64,6 +63,7 @@ int HttpRequest::decodeUrl()
             if(urlBuffer != nullptr)
             {
                 delete[] urlBuffer;
+                urlBuffer = nullptr;
             }
             urlBuffer = new char[urlLength + 1];
         }
@@ -87,10 +87,10 @@ int HttpRequest::checkUrl()
     for(int i = 0; urlBuffer[i] != 0 ; ++i)
     {
         if(!((urlBuffer[i] >= 'a' && urlBuffer[i] <= 'z') ||
-             (urlBuffer[i] >= 'A' && urlBuffer[i] <= 'Z') ||
-             (urlBuffer[i] >= '0' && urlBuffer[i] <= '9') ||
-              urlBuffer[i] == '/' || urlBuffer[i] == '.' || urlBuffer[i] == '_' ||
-              urlBuffer[i] == '-' || urlBuffer[i] == ' '))
+                (urlBuffer[i] >= 'A' && urlBuffer[i] <= 'Z') ||
+                (urlBuffer[i] >= '0' && urlBuffer[i] <= '9') ||
+                urlBuffer[i] == '/' || urlBuffer[i] == '.' || urlBuffer[i] == '_' ||
+                urlBuffer[i] == '-' || urlBuffer[i] == ' '))
         {
             return -1;
         }
@@ -644,4 +644,56 @@ HttpRequest::ParseResult HttpRequest::parseInternal()
     }
 }
 
+
+int HttpRequest::hex2int(char c)
+{
+    if(c >= '0' && c <= '9')
+    {
+        return c - '0';
+    }
+    c = (c | 0x20); // to lower case
+    if(c >= 'a' && c <= 'f')
+    {
+        return c - 'a' + 0xA;
+    }
+    return -1;
+}
+
+
+int HttpRequest::percentDecode(const char *src, char *dst, int srcLength)
+{
+    int si = 0;
+    int di = 0;
+
+    while(si < srcLength && src[si] != 0)
+    {
+        if(src[si] == '%' && si + 2 < srcLength)
+        {
+            int v1 = hex2int(src[si + 1]);
+            if(v1 < 0)
+            {
+                return -1;
+            }
+            int v2 = hex2int(src[si + 2]);
+            if(v2 < 0)
+            {
+                return -1;
+            }
+            dst[di] = ((v1 << 4) | v2);
+
+            si += 3;
+            ++di;
+        }
+        else
+        {
+            dst[di] = src[si];
+            ++si;
+            ++di;
+        }
+    }
+
+    dst[di] = 0;
+
+    return 0;
+}
 

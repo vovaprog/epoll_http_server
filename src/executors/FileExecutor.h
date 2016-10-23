@@ -15,7 +15,10 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
-    const char* name() override { return "file"; }
+    const char* name() override
+    {
+        return "file";
+    }
 
 protected:
 
