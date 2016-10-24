@@ -18,7 +18,7 @@ set(SOURCE
     HttpRequest.h HttpRequest.cpp
     HttpResponse.h HttpResponse.cpp
 
-    UwsgiApplicationParameters.h
+    ProxyParameters.h
     ProcessResult.h
     ExecutorType.h
     ConnectionType.h
@@ -39,8 +39,8 @@ set(SOURCE
     executors/NewFdExecutor.h      executors/NewFdExecutor.cpp
     executors/SslRequestExecutor.h executors/SslRequestExecutor.cpp
     executors/SslFileExecutor.h    executors/SslFileExecutor.cpp
-    executors/SslUwsgiExecutor.h   executors/SslUwsgiExecutor.cpp
-    executors/UwsgiExecutor.h      executors/UwsgiExecutor.cpp
+    executors/SslProxyExecutor.h   executors/SslProxyExecutor.cpp
+    executors/ProxyExecutor.h      executors/ProxyExecutor.cpp
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h
