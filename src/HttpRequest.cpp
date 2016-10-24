@@ -137,6 +137,7 @@ time_t HttpRequest::getIfModifiedSince()
             return 0;
         }
         strncpy(buf, ptr, length);
+        buf[length] = 0;
 
         struct tm time_data;
         if(strptime(buf, RFC1123FMT, &time_data) == NULL)
@@ -585,6 +586,7 @@ HttpRequest::ParseResult HttpRequest::parseInternal()
 
                     char buf[BUF_CHARS + 1];
                     strncpy(buf, data + h.value.start, h.value.length);
+                    buf[h.value.length] = 0; // strncpy does not put 0 terminator
 
                     contentLength = atoi(buf);
                 }
