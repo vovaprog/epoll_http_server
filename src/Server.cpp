@@ -2,7 +2,6 @@
 
 #include <LogStdout.h>
 #include <LogMmap.h>
-#include <HttpUtils.h>
 
 #include <pthread.h>
 #include <climits>
@@ -57,8 +56,6 @@ int Server::sslInit()
 
 int Server::staticInit()
 {
-    initHttpUtils();
-
     return 0;
 }
 

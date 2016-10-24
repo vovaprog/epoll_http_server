@@ -16,6 +16,7 @@ set(SOURCE
     PollLoop.h     PollLoop.cpp
 
     HttpRequest.h HttpRequest.cpp
+    HttpResponse.h HttpResponse.cpp
 
     UwsgiApplicationParameters.h
     ProcessResult.h
@@ -46,8 +47,7 @@ set(SOURCE
     utils/FileUtils.h          utils/FileUtils.cpp
     utils/NetworkUtils.h       utils/NetworkUtils.cpp
     utils/TimeUtils.h          utils/TimeUtils.cpp
-    utils/SslUtils.h           utils/SslUtils.cpp
-    utils/HttpUtils.h          utils/HttpUtils.cpp)
+    utils/SslUtils.h           utils/SslUtils.cpp)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -pedantic -pthread")
@@ -56,6 +56,6 @@ add_executable(epoll_http_server ${SOURCE})
 
 target_link_libraries(epoll_http_server ssl crypto tinyxml2)
 
-add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp utils/HttpUtils.h utils/HttpUtils.cpp)
+add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp)
 
 

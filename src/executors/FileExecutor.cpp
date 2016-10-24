@@ -1,8 +1,8 @@
 #include <PollLoopBase.h>
 #include <FileExecutor.h>
 #include <FileUtils.h>
-#include <HttpUtils.h>
 #include <TimeUtils.h>
+#include <HttpResponse.h>
 
 #include <sys/epoll.h>
 #include <sys/stat.h>
@@ -121,21 +121,15 @@ int FileExecutor::createOkResponse(ExecutorData &data, time_t lastModified)
 
     if(data.buffer.startWrite(p, size))
     {
-        char lastModifiedString[80];
-        strftime(lastModifiedString, sizeof(lastModifiedString), RFC1123FMT, gmtime(&lastModified));
+        int responseBytes = HttpResponse::ok200(static_cast<char*>(p), size, data.bytesToSend, lastModified);
 
-        int ret = snprintf(static_cast<char*>(p), size,
-                           "HTTP/1.1 200 Ok\r\n"
-                           "Content-Length: %lld\r\n"
-                           "Last-Modified: %s\r\n"
-                           "Connection: close\r\n\r\n", data.bytesToSend, lastModifiedString);
-
-        if(ret >= size)
+        if(responseBytes < 0)
         {
             return -1;
         }
-        size = std::min(size, ret);
-        data.buffer.endWrite(size);
+
+        data.buffer.endWrite(responseBytes);
+
         return 0;
     }
     else
@@ -153,51 +147,28 @@ int FileExecutor::createResponse(ExecutorData &data, int statusCode)
     void *p;
     int size;
 
-    const char *statusString = httpCode2String(statusCode);
-
-    if(statusString == nullptr)
-    {
-        return -1;
-    }
-
     if(data.buffer.startWrite(p, size))
     {
-        int ret;
+        int responseBytes;
 
         if(statusCode == HttpCode::notFound)
         {
-            const char *html =
-                "<html><head>"
-                "<title>404 Not Found</title>"
-                "</head><body>"
-                "<h1>Not Found</h1>"
-                "<p>The requested URL was not found on this server.</p>"
-                "</body></html>";
-
-            int htmlLength = strlen(html);
-
-            ret = snprintf(static_cast<char*>(p), size,
-                           "HTTP/1.1 %d %s\r\n"
-                           "Content-Length: %d\r\n"
-                           "Connection: close\r\n\r\n%s", statusCode, statusString, htmlLength, html);
-
+            responseBytes = HttpResponse::notFound404(static_cast<char*>(p), size);
         }
         else if(statusCode == HttpCode::notModified)
         {
-            ret = snprintf(static_cast<char*>(p), size,
-                           "HTTP/1.1 %d Not Modified\r\n"
-                           "Connection: close\r\n\r\n", statusCode);
+            responseBytes = HttpResponse::notModified304(static_cast<char*>(p), size);
         }
         else
         {
             return -1;
         }
 
-        if(ret >= size)
+        if(responseBytes < 0)
         {
             return -1;
         }
-        data.buffer.endWrite(ret);
+        data.buffer.endWrite(responseBytes);
         return 0;
     }
     else
