@@ -1,4 +1,4 @@
-#include <UwsgiExecutor.h>
+#include <ProxyExecutor.h>
 #include <PollLoopBase.h>
 #include <NetworkUtils.h>
 
@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-int UwsgiExecutor::init(PollLoopBase *loop)
+int ProxyExecutor::init(PollLoopBase *loop)
 {
     this->loop = loop;
     this->log = loop->log;
@@ -14,29 +14,29 @@ int UwsgiExecutor::init(PollLoopBase *loop)
 }
 
 
-int UwsgiExecutor::up(ExecutorData &data)
+int ProxyExecutor::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
 
     bool connected = false;
 
-    data.fd1 = socketConnectNonBlock("127.0.0.1", data.port, connected, log);
+    data.fd1 = socketConnectNonBlock(data.proxy->address.c_str(), data.proxy->port, connected, log);
 
     if(data.fd1 < 0)
     {
-        log->warning("UwsgiExecutor::up socketConnectNonBlock failed\n");
+        log->warning("ProxyExecutor::up socketConnectNonBlock failed\n");
         return -1;
     }
 
     if(loop->addPollFd(data, data.fd1, EPOLLOUT) != 0)
     {
-        log->warning("UwsgiExecutor::up addPollFd failed\n");
+        log->warning("ProxyExecutor::up addPollFd failed\n");
         return -1;
     }
 
     if(loop->removePollFd(data, data.fd0) != 0)
     {
-        log->warning("UwsgiExecutor::up removePollFd failed\n");
+        log->warning("ProxyExecutor::up removePollFd failed\n");
         return -1;
     }
 
@@ -53,7 +53,7 @@ int UwsgiExecutor::up(ExecutorData &data)
 }
 
 
-ProcessResult UwsgiExecutor::process(ExecutorData &data, int fd, int events)
+ProcessResult ProxyExecutor::process(ExecutorData &data, int fd, int events)
 {
     if(data.state == ExecutorData::State::waitConnect && fd == data.fd1 && (events & EPOLLOUT))
     {
@@ -76,12 +76,12 @@ ProcessResult UwsgiExecutor::process(ExecutorData &data, int fd, int events)
         return process_forwardResponseOnlyWrite(data);
     }
 
-    loop->log->warning("invalid process call (uwsgi)\n");
+    loop->log->warning("invalid process call (proxy)\n");
     return ProcessResult::removeExecutorError;
 }
 
 
-ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
+ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
 {
     void *p;
     int size;
@@ -115,12 +115,12 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
 
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
             {
-                log->error("UwsgiExecutor::process_forwardRequest addPollFd failed\n");
+                log->error("ProxyExecutor::process_forwardRequest addPollFd failed\n");
                 return ProcessResult::removeExecutorError;
             }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
-                log->error("UwsgiExecutor::process_forwardRequest editPollFd failed\n");
+                log->error("ProxyExecutor::process_forwardRequest editPollFd failed\n");
                 return ProcessResult::removeExecutorError;
             }
             return ProcessResult::ok;
@@ -136,7 +136,7 @@ ProcessResult UwsgiExecutor::process_forwardRequest(ExecutorData &data)
 }
 
 
-ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
+ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
 {
     void *p;
     int size;
@@ -161,7 +161,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
             }
             else
             {
-                log->error("UwsgiExecutor::process_forwardResponseRead   read failed: %s\n", strerror(errno));
+                log->error("ProxyExecutor::process_forwardResponseRead   read failed: %s\n", strerror(errno));
                 return ProcessResult::removeExecutorError;
             }
         }
@@ -179,7 +179,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseRead(ExecutorData &data)
 }
 
 
-ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
+ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
 {
     void *p;
     int size;
@@ -211,7 +211,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseWrite(ExecutorData &data)
 }
 
 
-ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data)
+ProcessResult ProxyExecutor::process_forwardResponseOnlyWrite(ExecutorData &data)
 {
     void *p;
     int size;
@@ -253,7 +253,7 @@ ProcessResult UwsgiExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
     }
 }
 
-ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
+ProcessResult ProxyExecutor::process_waitConnect(ExecutorData &data)
 {
     int socketError = socketConnectNonBlockCheck(data.fd1, log);
 
@@ -269,7 +269,7 @@ ProcessResult UwsgiExecutor::process_waitConnect(ExecutorData &data)
     }
     else
     {
-        log->error("UwsgiExecutor::process_waitConnect socketConnectNonBlockCheck failed\n");
+        log->error("ProxyExecutor::process_waitConnect socketConnectNonBlockCheck failed\n");
         return ProcessResult::removeExecutorError;
     }
 }

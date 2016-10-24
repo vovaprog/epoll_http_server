@@ -239,9 +239,9 @@ ProcessResult SslRequestExecutor::process_readRequest(ExecutorData &data)
     {
         return setExecutor(data, loop->getExecutor(ExecutorType::sslFile));
     }
-    else if(parseResult == ParseRequestResult::uwsgi)
+    else if(parseResult == ParseRequestResult::proxy)
     {
-        return setExecutor(data, loop->getExecutor(ExecutorType::sslUwsgi));
+        return setExecutor(data, loop->getExecutor(ExecutorType::sslProxy));
     }
     else if(parseResult == ParseRequestResult::invalid)
     {

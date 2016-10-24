@@ -1,15 +1,15 @@
-#ifndef SSL_UWSGI_EXECUTOR_H
-#define SSL_UWSGI_EXECUTOR_H
+#ifndef SSL_PROXY_EXECUTOR_H
+#define SSL_PROXY_EXECUTOR_H
 
-#include <UwsgiExecutor.h>
+#include <ProxyExecutor.h>
 
-class SslUwsgiExecutor: public UwsgiExecutor
+class SslProxyExecutor: public ProxyExecutor
 {
 public:
 
     const char* name() override
     {
-        return "ssluwsgi";
+        return "sslproxy";
     }
 
 protected:

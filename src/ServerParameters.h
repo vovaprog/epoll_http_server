@@ -4,7 +4,7 @@
 #include <Log.h>
 #include <vector>
 #include <string>
-#include <UwsgiApplicationParameters.h>
+#include <ProxyParameters.h>
 
 struct ServerParameters
 {
@@ -21,7 +21,7 @@ struct ServerParameters
         threadCount = 1;
         httpPorts.clear();
         httpsPorts.clear();
-        uwsgiApplications.clear();
+        proxies.clear();
         logLevel = Log::Level::info;
         logType = Log::Type::stdout;
         logFileSize = 1024 * 1024;
@@ -51,7 +51,7 @@ struct ServerParameters
 
     std::vector<int> httpPorts;
     std::vector<int> httpsPorts;
-    std::vector<UwsgiApplicationParameters> uwsgiApplications;
+    std::vector<ProxyParameters> proxies;
 };
 
 #endif

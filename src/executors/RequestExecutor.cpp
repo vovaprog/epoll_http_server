@@ -1,6 +1,6 @@
 #include <RequestExecutor.h>
 
-#include <UwsgiApplicationParameters.h>
+#include <ProxyParameters.h>
 #include <PollLoopBase.h>
 
 #include <sys/epoll.h>
@@ -113,18 +113,18 @@ ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecut
 }
 
 
-int RequestExecutor::findApplicationIndex(ExecutorData &data)
+ProxyParameters* RequestExecutor::findProxy(ExecutorData &data)
 {
-    int size = loop->parameters->uwsgiApplications.size();
+    int size = loop->parameters->proxies.size();
     for(int i = 0; i < size ; ++i)
     {
-        if(data.request.isUrlPrefix(loop->parameters->uwsgiApplications[i].prefix.c_str()))
+        if(data.request.isUrlPrefix(loop->parameters->proxies[i].prefix.c_str()))
         {
-            return i;
+            return &loop->parameters->proxies[i];
         }
     }
 
-    return -1;
+    return nullptr;
 }
 
 
@@ -152,19 +152,18 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
         {
             log->debug("url: [%s]\n", data.request.getUrl());
 
-            int appIndex = findApplicationIndex(data);
+            ProxyParameters *proxy = findProxy(data);
 
-            if(appIndex >= 0)
+            if(proxy != nullptr)
             {
-                UwsgiApplicationParameters &app = loop->parameters->uwsgiApplications[appIndex];
-
-                if((data.connectionType & app.connectionType) == 0)
+                if((data.connectionType & proxy->connectionType) == 0)
                 {
                     return ParseRequestResult::invalid;
                 }
 
-                data.port = app.port;
-                return ParseRequestResult::uwsgi;
+                data.proxy = proxy;
+
+                return ParseRequestResult::proxy;
             }
             else
             {
@@ -233,9 +232,9 @@ ProcessResult RequestExecutor::process_readRequest(ExecutorData &data)
     {
         return setExecutor(data, loop->getExecutor(ExecutorType::file));
     }
-    else if(parseResult == ParseRequestResult::uwsgi)
+    else if(parseResult == ParseRequestResult::proxy)
     {
-        return setExecutor(data, loop->getExecutor(ExecutorType::uwsgi));
+        return setExecutor(data, loop->getExecutor(ExecutorType::proxy));
     }
     else if(parseResult == ParseRequestResult::invalid)
     {

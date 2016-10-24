@@ -30,7 +30,7 @@ protected:
 
     enum class ParseRequestResult
     {
-        again, file, uwsgi, invalid
+        again, file, proxy, invalid
     };
 
     ParseRequestResult parseRequest(ExecutorData &data);
@@ -39,7 +39,7 @@ protected:
 
     virtual ProcessResult process_readRequest(ExecutorData &data);
 
-    int findApplicationIndex(ExecutorData &data);
+    ProxyParameters* findProxy(ExecutorData &data);
 };
 
 #endif

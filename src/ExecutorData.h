@@ -10,6 +10,7 @@
 #include <openssl/ssl.h>
 
 class Executor;
+class ProxyParameters;
 
 struct ExecutorData
 {
@@ -64,6 +65,8 @@ struct ExecutorData
     int retryCounter = 0;
 
     HttpRequest request;
+
+    ProxyParameters *proxy = nullptr;
 };
 
 #endif

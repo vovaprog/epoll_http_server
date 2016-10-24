@@ -12,14 +12,15 @@
     <httpsPorts>
         <port>1443</port>
     </httpsPorts>
-    <uwsgiApplications>
-        <application>
-            <prefix>app</prefix>                  <!-- prefix of application url. for example:   url: /app/page   prefix: app -->
-            <port>7070</port>                     <!-- port of running uwsgi server -->
-            <connectionType clear="0" ssl="1"/>   <!-- Enable this application only for specified connection types.
+    <proxies>
+        <proxy>
+            <prefix>app</prefix>                  <!-- prefix of url. for example:   url: /app/page   prefix: app -->
+            <address>127.0.0.1</address>          <!-- server address -->
+            <port>7070</port>                     <!-- server port -->
+            <connectionType clear="0" ssl="1"/>   <!-- Enable this proxy only for specified connection types.
                                                        If no connectionType element - all connection types are enabled.
                                                        If some attribute is not specified, it defaults to zero, connection type is disabled. -->
-        </application>
-    </uwsgiApplications>
+        </proxy>
+    </proxies>
 </httpServerConfig>
 

@@ -1,9 +1,9 @@
-#ifndef UWSGI_EXECUTOR_H
-#define UWSGI_EXECUTOR_H
+#ifndef PROXY_EXECUTOR_H
+#define PROXY_EXECUTOR_H
 
 #include <Executor.h>
 
-class UwsgiExecutor: public Executor
+class ProxyExecutor: public Executor
 {
 public:
 
@@ -15,7 +15,7 @@ public:
 
     const char* name() override
     {
-        return "uwsgi";
+        return "proxy";
     }
 
 protected:

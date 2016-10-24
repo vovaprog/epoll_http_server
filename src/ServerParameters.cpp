@@ -138,18 +138,22 @@ int ServerParameters::load(const char *fileName)
         }
     }
 
-    parent = root->FirstChildElement("uwsgiApplications");
+    parent = root->FirstChildElement("proxies");
     if(parent != nullptr)
     {
-        for(tinyxml2::XMLElement *child = parent->FirstChildElement("application"); child != NULL; child = child->NextSiblingElement())
+        for(tinyxml2::XMLElement *child = parent->FirstChildElement("proxy"); child != NULL; child = child->NextSiblingElement())
         {
-            UwsgiApplicationParameters app;
+            ProxyParameters proxy;
 
-            if(readElementString(child, "prefix", app.prefix, true) != 0)
+            if(readElementString(child, "prefix", proxy.prefix, true) != 0)
             {
                 return -1;
             }
-            if(readElementInt(child, "port", app.port, true) != 0)
+            if(readElementString(child, "address", proxy.address, true) != 0)
+            {
+                return -1;
+            }
+            if(readElementInt(child, "port", proxy.port, true) != 0)
             {
                 return -1;
             }
@@ -157,25 +161,25 @@ int ServerParameters::load(const char *fileName)
             tinyxml2::XMLElement *el = getChild(child, "connectionType", false);
             if(el != nullptr)
             {
-                app.connectionType = (int)ConnectionType::none;
+                proxy.connectionType = (int)ConnectionType::none;
 
                 int v;
                 if(el->QueryIntAttribute("clear", &v) == tinyxml2::XML_SUCCESS)
                 {
                     if(v != 0)
                     {
-                        app.connectionType = (app.connectionType | (int)ConnectionType::clear);
+                        proxy.connectionType = (proxy.connectionType | (int)ConnectionType::clear);
                     }
                 }
                 if(el->QueryIntAttribute("ssl", &v) == tinyxml2::XML_SUCCESS)
                 {
                     if(v != 0)
                     {
-                        app.connectionType = (app.connectionType | (int)ConnectionType::ssl);
+                        proxy.connectionType = (proxy.connectionType | (int)ConnectionType::ssl);
                     }
                 }
 
-                if(app.connectionType == (int)ConnectionType::none)
+                if(proxy.connectionType == (int)ConnectionType::none)
                 {
                     printf("invalid connectionType\n");
                     return -1;
@@ -183,10 +187,10 @@ int ServerParameters::load(const char *fileName)
             }
             else
             {
-                app.connectionType = ((int)ConnectionType::clear | (int)ConnectionType::ssl);
+                proxy.connectionType = ((int)ConnectionType::clear | (int)ConnectionType::ssl);
             }
 
-            uwsgiApplications.push_back(app);
+            proxies.push_back(proxy);
         }
     }
 
@@ -212,24 +216,24 @@ void ServerParameters::writeToLog(Log *log)
     {
         log->info("httpsPort: %d\n", port);
     }
-    for(UwsgiApplicationParameters & app : uwsgiApplications)
+    for(ProxyParameters & proxy : proxies)
     {
         const char *conTypeString = "none";
 
-        if((app.connectionType & (int)ConnectionType::clear) && (app.connectionType & (int)ConnectionType::ssl))
+        if((proxy.connectionType & (int)ConnectionType::clear) && (proxy.connectionType & (int)ConnectionType::ssl))
         {
             conTypeString = "clear, ssl";
         }
-        else if(app.connectionType & (int)ConnectionType::clear)
+        else if(proxy.connectionType & (int)ConnectionType::clear)
         {
             conTypeString = "clear";
         }
-        else if(app.connectionType & (int)ConnectionType::ssl)
+        else if(proxy.connectionType & (int)ConnectionType::ssl)
         {
             conTypeString = "ssl";
         }
 
-        log->info("uwsgi application   prefix: %s   port: %d   connection: %s\n", app.prefix.c_str(), app.port, conTypeString);
+        log->info("proxy   prefix: %s   address: %s   port: %d   connection: %s\n", proxy.prefix.c_str(), proxy.address.c_str(), proxy.port, conTypeString);
     }
     log->info("-----------------------------\n");
 }

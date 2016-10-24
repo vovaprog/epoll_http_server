@@ -45,10 +45,10 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
     sslServerExecutor.init(this);
     requestExecutor.init(this);
     fileExecutor.init(this);
-    uwsgiExecutor.init(this);
+    proxyExecutor.init(this);
     sslRequestExecutor.init(this);
     sslFileExecutor.init(this);
-    sslUwsgiExecutor.init(this);
+    sslProxyExecutor.init(this);
 
 
     return 0;
@@ -438,16 +438,16 @@ Executor* PollLoop::getExecutor(ExecutorType execType)
         return &fileExecutor;
     case ExecutorType::sslFile:
         return &sslFileExecutor;
-    case ExecutorType::uwsgi:
-        return &uwsgiExecutor;
+    case ExecutorType::proxy:
+        return &proxyExecutor;
     case ExecutorType::server:
         return &serverExecutor;
     case ExecutorType::serverSsl:
         return &sslServerExecutor;
     case ExecutorType::requestSsl:
         return &sslRequestExecutor;
-    case ExecutorType::sslUwsgi:
-        return &sslUwsgiExecutor;
+    case ExecutorType::sslProxy:
+        return &sslProxyExecutor;
     default:
         return nullptr;
     }

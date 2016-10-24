@@ -7,11 +7,11 @@
 #include <ServerExecutor.h>
 #include <RequestExecutor.h>
 #include <FileExecutor.h>
-#include <UwsgiExecutor.h>
+#include <ProxyExecutor.h>
 #include <SslServerExecutor.h>
 #include <SslRequestExecutor.h>
 #include <SslFileExecutor.h>
-#include <SslUwsgiExecutor.h>
+#include <SslProxyExecutor.h>
 
 #include <PollData.h>
 
@@ -78,15 +78,15 @@ protected:
 
 protected:
 
+    NewFdExecutor newFdExecutor;
     ServerExecutor serverExecutor;
     SslServerExecutor sslServerExecutor;
-    SslFileExecutor sslFileExecutor;
-    SslUwsgiExecutor sslUwsgiExecutor;
     RequestExecutor requestExecutor;
     SslRequestExecutor sslRequestExecutor;
     FileExecutor fileExecutor;
-    UwsgiExecutor uwsgiExecutor;
-    NewFdExecutor newFdExecutor;
+    SslFileExecutor sslFileExecutor;
+    ProxyExecutor proxyExecutor;
+    SslProxyExecutor sslProxyExecutor;
 
 
     ExecutorData *execDatas = nullptr;

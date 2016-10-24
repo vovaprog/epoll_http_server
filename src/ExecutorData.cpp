@@ -42,6 +42,8 @@ void ExecutorData::down()
 
     retryCounter = 0;
 
+    proxy = nullptr;
+
     return;
 }
 
