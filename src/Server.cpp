@@ -35,6 +35,12 @@ static void sslLockCallback(int mode, int type, const char *file, int line)
 }
 
 
+int Server::staticInit()
+{
+    return 0;
+}
+
+
 int Server::sslInit()
 {
     if(!sslInited)
@@ -54,11 +60,6 @@ int Server::sslInit()
 }
 
 
-int Server::staticInit()
-{
-    return 0;
-}
-
 void Server::staticDestroy()
 {
     if(sslInited)
@@ -73,6 +74,9 @@ void Server::staticDestroy()
             delete[] sslMutexes;
             sslMutexes = nullptr;
         }
+
+        ERR_free_strings();
+        EVP_cleanup();
     }
 }
 
@@ -104,7 +108,7 @@ SSL_CTX* Server::sslCreateContext(Log *log)
 
     if(SSL_CTX_check_private_key(sslCtx) <= 0)
     {
-        log->error("SSL_CTX_check_private_key\n");
+        log->error("SSL_CTX_check_private_key failed\n");
         SSL_CTX_free(sslCtx);
         return nullptr;
     }
