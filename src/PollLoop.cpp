@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 #include <signal.h>
 #include <sys/eventfd.h>
-#include <openssl/err.h>
 
 
 int PollLoop::init(ServerBase *srv, ServerParameters *params)
@@ -399,10 +398,6 @@ void PollLoop::destroy()
     {
         close(eventFd);
         eventFd = -1;
-    }
-    if(parameters->httpsPorts.size() > 0)
-    {
-        ERR_remove_state(0);
     }
 }
 

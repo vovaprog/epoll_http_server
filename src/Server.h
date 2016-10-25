@@ -30,12 +30,13 @@ public:
 
 protected:
 
-    static int sslInit();
+    void threadEntry(int pollLoopIndex);
 
     SSL_CTX* sslCreateContext(Log *log);
 
     void sslDestroyContext(SSL_CTX *ctx);
 
+    static int sslInit();
 
 protected:
 

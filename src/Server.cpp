@@ -204,10 +204,21 @@ int Server::start(ServerParameters &parameters)
 
     for(int i = 0; i < parameters.threadCount; ++i)
     {
-        threads[i] = std::thread(&PollLoop::run, &loops[i]);
+        threads[i] = std::thread(&Server::threadEntry, this, i);
     }
 
     return 0;
+}
+
+
+void Server::threadEntry(int pollLoopIndex)
+{
+    loops[pollLoopIndex].run();
+
+    if(parameters.httpsPorts.size() > 0)
+    {
+        ERR_remove_state(0);
+    }
 }
 
 
