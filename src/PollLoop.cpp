@@ -118,7 +118,7 @@ int PollLoop::run()
                     {
                         if(execData.retryCounter > ExecutorData::MAX_RETRY_COUNTER)
                         {
-                            log->warning("big badOperationCounter. destroy executor\n");
+                            log->warning("retryCounter > MAX_RETRY_COUNTER. destroy executor\n");
                             removeExecutorData(&execData);
                         }
                         else

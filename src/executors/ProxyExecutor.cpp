@@ -24,19 +24,16 @@ int ProxyExecutor::up(ExecutorData &data)
 
     if(data.fd1 < 0)
     {
-        log->warning("ProxyExecutor::up socketConnectNonBlock failed\n");
         return -1;
     }
 
     if(loop->addPollFd(data, data.fd1, EPOLLOUT) != 0)
     {
-        log->warning("ProxyExecutor::up addPollFd failed\n");
         return -1;
     }
 
     if(loop->removePollFd(data, data.fd0) != 0)
     {
-        log->warning("ProxyExecutor::up removePollFd failed\n");
         return -1;
     }
 
@@ -114,13 +111,11 @@ ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
             data.state = ExecutorData::State::forwardResponse;
 
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
-            {
-                log->error("ProxyExecutor::process_forwardRequest addPollFd failed\n");
+            {                
                 return ProcessResult::removeExecutorError;
             }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
-                log->error("ProxyExecutor::process_forwardRequest editPollFd failed\n");
                 return ProcessResult::removeExecutorError;
             }
             return ProcessResult::ok;
@@ -198,7 +193,7 @@ ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
             }
             else
             {
-                log->error("write failed: %s\n", strerror(errorCode));
+                log->error("writeFd0 failed: %s\n", strerror(errorCode));
                 return ProcessResult::removeExecutorError;
             }
         }
@@ -230,7 +225,7 @@ ProcessResult ProxyExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
             }
             else
             {
-                log->error("write failed: %s\n", strerror(errorCode));
+                log->error("writeFd0 failed: %s\n", strerror(errorCode));
                 return ProcessResult::removeExecutorError;
             }
         }
@@ -269,7 +264,7 @@ ProcessResult ProxyExecutor::process_waitConnect(ExecutorData &data)
     }
     else
     {
-        log->error("ProxyExecutor::process_waitConnect socketConnectNonBlockCheck failed\n");
+        log->error("ProxyExecutor::process_waitConnect socketConnectNonBlockCheck failed: %d\n", socketError);
         return ProcessResult::removeExecutorError;
     }
 }

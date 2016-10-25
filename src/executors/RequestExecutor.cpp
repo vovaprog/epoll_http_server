@@ -15,8 +15,6 @@ int RequestExecutor::init(PollLoopBase *loop)
 
 int RequestExecutor::up(ExecutorData &data)
 {
-    log->debug("RequestExecutor up called\n");
-
     data.removeOnTimeout = true;
     data.connectionType = (int)ConnectionType::clear;
 
@@ -68,7 +66,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
                 }
                 else
                 {
-                    log->warning("RequestExecutor::readRequest   read failed: %s   (%d)\n", strerror(errorCode), errorCode);
+                    log->warning("RequestExecutor::readRequest   readFd0 failed: %s   (%d)\n", strerror(errorCode), errorCode);
                 }
                 return -1;
             }
@@ -135,17 +133,6 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
 
     if(data.buffer.startRead(p, size))
     {
-        {
-            char *cp = static_cast<char*>(p);
-            char tempChar = cp[size - 1];
-            cp[size - 1] = 0;
-
-            log->debug("request:\n[[[[[%s]]]]]\n", cp);
-
-            cp[size - 1] = tempChar;
-        }
-
-
         HttpRequest::ParseResult result = data.request.parse(static_cast<char*>(p), size);
 
         if(result == HttpRequest::ParseResult::finishOk)
@@ -158,6 +145,8 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
             {
                 if((data.connectionType & proxy->connectionType) == 0)
                 {
+                    log->info("invalid connection type\n");
+
                     return ParseRequestResult::invalid;
                 }
 
