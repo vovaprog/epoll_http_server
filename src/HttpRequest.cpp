@@ -112,7 +112,7 @@ int HttpRequest::getHeaderValue(const char *key, const char **ptr, int *size)
         return -1;
     }
 
-    for(Header &head : headers)
+    for(Header & head : headers)
     {
         if(strncasecmp(key, data + head.key.start, head.key.length) == 0)
         {
@@ -209,7 +209,7 @@ int HttpRequest::print()
     {
         printf("url params: [%.*s]\n", urlParametersLength, data + urlParametersStart);
     }
-    for(const Header &head : headers)
+    for(const Header & head : headers)
     {
         printf("[%.*s]: [%.*s]\n", head.key.length, data + head.key.start, head.value.length, data + head.value.start);
     }

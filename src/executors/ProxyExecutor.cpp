@@ -111,7 +111,7 @@ ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
             data.state = ExecutorData::State::forwardResponse;
 
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
-            {                
+            {
                 return ProcessResult::removeExecutorError;
             }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)

@@ -38,9 +38,9 @@ int HttpResponse::notFound404(char *buffer, int size)
     int htmlLength = strlen(html);
 
     int ret = snprintf(buffer, size,
-                   "HTTP/1.1 404 Not Found\r\n"
-                   "Content-Length: %d\r\n"
-                   "Connection: close\r\n\r\n%s", htmlLength, html);
+                       "HTTP/1.1 404 Not Found\r\n"
+                       "Content-Length: %d\r\n"
+                       "Connection: close\r\n\r\n%s", htmlLength, html);
 
     if(ret >= size)
     {
@@ -54,8 +54,8 @@ int HttpResponse::notFound404(char *buffer, int size)
 int HttpResponse::notModified304(char *buffer, int size)
 {
     int ret = snprintf(buffer, size,
-                   "HTTP/1.1 304 Not Modified\r\n"
-                   "Connection: close\r\n\r\n");
+                       "HTTP/1.1 304 Not Modified\r\n"
+                       "Connection: close\r\n\r\n");
 
     if(ret >= size)
     {

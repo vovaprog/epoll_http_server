@@ -31,7 +31,7 @@ int LogMmap::init(ServerParameters *params)
 
     struct stat st = { 0 };
 
-    if (stat(logFileName, &st) == -1)
+    if(stat(logFileName, &st) == -1)
     {
         if(mkdir(logFileName, 0700) != 0)
         {

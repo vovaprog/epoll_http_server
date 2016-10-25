@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 include_directories("." "./log" "./executors" "./utils")
 
-set(SOURCE 
+set(SOURCE
     main.cpp
 
     ServerBase.h
