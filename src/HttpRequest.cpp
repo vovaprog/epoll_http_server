@@ -66,6 +66,7 @@ int HttpRequest::decodeUrl()
                 urlBuffer = nullptr;
             }
             urlBuffer = new char[urlLength + 1];
+            urlBufferSize = urlLength + 1;
         }
         if(percentDecode(data + urlStart, urlBuffer, urlLength) != 0)
         {
