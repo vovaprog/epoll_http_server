@@ -10,7 +10,7 @@
 #include <openssl/ssl.h>
 
 class Executor;
-class ProxyParameters;
+struct ProxyParameters;
 
 struct ExecutorData
 {

@@ -29,7 +29,7 @@ int LogMmap::init(ServerParameters *params)
     strcpy(logFileName, params->logFolder.c_str());
 
 
-    struct stat st = { 0 };
+    struct stat st;
 
     if(stat(logFileName, &st) == -1)
     {
