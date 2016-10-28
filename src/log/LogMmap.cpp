@@ -78,9 +78,11 @@ void LogMmap::closeFile()
 {
     if(fd >= 0)
     {
+        void *ptr = buffer.getDataPtr();
+
         buffer.init(nullptr, 0);
 
-        if(munmap(buffer.getDataPtr(), logFileSize) != 0)
+        if(munmap(ptr, logFileSize) != 0)
         {
             perror("munmap failed\n");
         }
