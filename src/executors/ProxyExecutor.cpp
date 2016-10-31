@@ -144,8 +144,7 @@ ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
         {
             if(bytesRead == 0)
             {
-                close(data.fd1);
-                data.fd1 = -1;
+                loop->closeFd(data, data.fd1);
                 data.state = ExecutorData::State::forwardResponseOnlyWrite;
                 return ProcessResult::ok;
             }

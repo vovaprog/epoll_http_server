@@ -539,6 +539,34 @@ int PollLoop::createRequestExecutorInternal(int fd, ExecutorType execType)
 }
 
 
+int PollLoop::closeFd(ExecutorData &data, int fd)
+{
+    if(fd == data.fd0)
+    {
+        if(data.pollIndexFd0 >= 0)
+        {
+            removePollFd(data, data.fd0);
+        }
+        close(data.fd0);
+        data.fd0 = -1;
+        return 0;
+    }
+    else if(fd == data.fd1)
+    {
+        if(data.pollIndexFd1 >= 0)
+        {
+            removePollFd(data, data.fd1);
+        }
+        close(data.fd1);
+        data.fd1 = -1;
+        return 0;
+    }
+
+    log->error("closeFd - invalid arguments\n");
+    return -1;
+}
+
+
 void PollLoop::logStats()
 {
     unsigned long long int tid = pthread_self();
@@ -554,3 +582,4 @@ void PollLoop::logStats()
 
     log->info("[%s]>>>>>>>\n", tidBuf);
 }
+

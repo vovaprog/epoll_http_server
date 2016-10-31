@@ -53,6 +53,8 @@ public:
 
     int removePollFd(ExecutorData &data, int fd) override;
 
+    int closeFd(ExecutorData &data, int fd) override;
+
     int listenPort(int port, ExecutorType execType);
 
 protected:

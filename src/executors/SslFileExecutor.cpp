@@ -37,8 +37,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
             }
             else if(bytesRead == 0)
             {
-                close(data.fd1);
-                data.fd1 = -1;
+                loop->closeFd(data, data.fd1);
             }
             else
             {
