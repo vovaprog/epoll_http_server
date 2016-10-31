@@ -281,22 +281,45 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
 
 int PollLoop::removePollFd(ExecutorData &data, int fd)
 {
+    int pollIndex = -1;
+
+    if(fd == data.fd0)
+    {
+        pollIndex = data.pollIndexFd0;
+    }
+    else if(fd == data.fd1)
+    {
+        pollIndex = data.pollIndexFd1;
+    }
+
+    if(pollIndex < 0)
+    {
+        data.writeLog(log, Log::Level::error, "removePollFd called with invalid fd");
+        return -1;
+    }
+
     if(epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, NULL) != 0)
     {
         log->error("epoll_ctl del failed: %s\n", strerror(errno));
         return -1;
     }
-    if(fd == data.fd0)
+
+    if(pollIndex == data.pollIndexFd0)
     {
         emptyPollDatas.push(data.pollIndexFd0);
+        data.pollIndexFd0 = -1;
         --numOfPollFds;
+        return 0;
     }
-    else if(fd == data.fd1)
+    else if(pollIndex == data.pollIndexFd1)
     {
         emptyPollDatas.push(data.pollIndexFd1);
+        data.pollIndexFd1 = -1;
         --numOfPollFds;
+        return 0;
     }
-    return 0;
+
+    return -1;
 }
 
 
@@ -480,13 +503,11 @@ void PollLoop::removeExecutorData(ExecutorData *execData)
 
     if(execData->pollIndexFd0 >= 0)
     {
-        emptyPollDatas.push(execData->pollIndexFd0);
-        --numOfPollFds;
+        removePollFd(*execData, execData->fd0);
     }
     if(execData->pollIndexFd1 >= 0)
     {
-        emptyPollDatas.push(execData->pollIndexFd1);
-        --numOfPollFds;
+        removePollFd(*execData, execData->fd1);
     }
 
     execData->down();
