@@ -41,6 +41,7 @@ set(SOURCE
     executors/SslFileExecutor.h    executors/SslFileExecutor.cpp
     executors/SslProxyExecutor.h   executors/SslProxyExecutor.cpp
     executors/ProxyExecutor.h      executors/ProxyExecutor.cpp
+    executors/ProxyExecutorSplice.h      executors/ProxyExecutorSplice.cpp
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h

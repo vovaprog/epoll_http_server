@@ -26,6 +26,17 @@ void ExecutorData::down()
     pollIndexFd0 = -1;
     pollIndexFd1 = -1;
 
+    if(pipeReadFd > 0)
+    {
+        close(pipeReadFd);
+        pipeReadFd = -1;
+    }
+    if(pipeWriteFd > 0)
+    {
+        close(pipeWriteFd);
+        pipeWriteFd = -1;
+    }
+
     state = State::invalid;
     pExecutor = nullptr;
 

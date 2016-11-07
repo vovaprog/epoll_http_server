@@ -44,6 +44,9 @@ struct ExecutorData
     int pollIndexFd0 = -1;
     int pollIndexFd1 = -1;
 
+    int pipeReadFd = -1;
+    int pipeWriteFd = -1;
+
     long long int bytesToSend = 0;
     off_t filePosition = 0;
 
