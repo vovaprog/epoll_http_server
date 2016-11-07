@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
+
 int ProxyExecutorSplice::init(PollLoopBase *loop)
 {
     this->loop = loop;
@@ -65,13 +66,10 @@ ProcessResult ProxyExecutorSplice::process(ExecutorData &data, int fd, int event
     {
         return process_forwardResponseRead(data);
     }
-    if(data.state == ExecutorData::State::forwardResponse && fd == data.fd0 && (events & EPOLLOUT))
+    if((data.state == ExecutorData::State::forwardResponse ||
+        data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_forwardResponseWrite(data);
-    }
-    if(data.state == ExecutorData::State::forwardResponseOnlyWrite && fd == data.fd0 && (events & EPOLLOUT))
-    {
-        return process_forwardResponseOnlyWrite(data);
     }
 
     loop->log->warning("invalid process call (proxy)\n");
@@ -133,10 +131,6 @@ ProcessResult ProxyExecutorSplice::process_forwardRequest(ExecutorData &data)
 
             data.state = ExecutorData::State::forwardResponse;
 
-            if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
-            {
-                return ProcessResult::removeExecutorError;
-            }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
                 return ProcessResult::removeExecutorError;
@@ -160,18 +154,32 @@ ProcessResult ProxyExecutorSplice::process_forwardRequest(ExecutorData &data)
 
 ProcessResult ProxyExecutorSplice::process_forwardResponseRead(ExecutorData &data)
 {
-    int bytes = splice(data.fd1 , NULL, data.pipeWriteFd, NULL, 10000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+    int bytes = splice(data.fd1 , NULL, data.pipeWriteFd, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+
+    log->debug("splice read bytes: %d\n", bytes);
 
     if(bytes == 0)
     {
+        loop->closeFd(data, data.fd1);
         data.state = ExecutorData::State::forwardResponseOnlyWrite;
-        return ProcessResult::ok;
+        return process_forwardResponseWrite(data);
     }
     else if(bytes < 0)
     {
+        log->debug("splice read failed: %d.   bytes in pipe: %d\n", errno, data.bytesInPipe);
+
         if(errno == EAGAIN || errno == EWOULDBLOCK)
         {
             ++data.retryCounter;
+
+            if(data.bytesInPipe > 0 && data.pollIndexFd1 >= 0)
+            {
+                if(loop->removePollFd(data, data.fd1) != 0)
+                {
+                    return ProcessResult::removeExecutorError;
+                }
+            }
+
             return ProcessResult::ok;
         }
         else
@@ -180,59 +188,120 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseRead(ExecutorData &dat
             return ProcessResult::removeExecutorError;
         }
     }
-    else
+    else // bytes > 0
     {
         data.retryCounter = 0;
+        data.bytesInPipe += bytes;
+        return process_forwardResponseWrite(data);
     }
 
+    ++data.retryCounter;
     return ProcessResult::ok;
 }
+
 
 ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &data)
 {
-    int bytes = splice(data.pipeReadFd, NULL, data.fd0, NULL, 10000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+    if(data.bytesInPipe > 0)
+    {
+        int bytes = splice(data.pipeReadFd, NULL, data.fd0, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
-    if(bytes == 0)
-    {
-        return ProcessResult::ok;
-    }
-    else if(bytes < 0)
-    {
-        if(errno == EAGAIN || errno == EWOULDBLOCK)
+        log->debug("splice write bytes: %d\n", bytes);
+
+        if(bytes == 0)
         {
             ++data.retryCounter;
             return ProcessResult::ok;
         }
-        else
+        else if(bytes < 0)
         {
-            log->error("splice failed: %s\n", strerror(errno));
-            return ProcessResult::removeExecutorError;
+            log->debug("splice write failed: %d.    bytes in pipe: %d\n", errno, data.bytesInPipe);
+
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                ++data.retryCounter;
+
+                if(data.pollIndexFd0 < 0)
+                {
+                    if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
+                    {
+                        return ProcessResult::removeExecutorError;
+                    }
+                }
+
+                return ProcessResult::ok;
+            }
+            else
+            {
+                log->error("splice failed: %s\n", strerror(errno));
+                return ProcessResult::removeExecutorError;
+            }
         }
+        else // bytes > 0
+        {
+            data.bytesInPipe -= bytes;
+            data.retryCounter = 0;
+
+            if(data.bytesInPipe < 0)
+            {
+                log->error("bytes in pipe < 0\n");
+                return ProcessResult::removeExecutorError;
+            }
+            else
+            {
+                if(data.state == ExecutorData::State::forwardResponseOnlyWrite)
+                {
+                     if(data.bytesInPipe == 0)
+                     {
+                         return ProcessResult::removeExecutorOk;
+                     }
+                }
+
+                if(data.bytesInPipe > 0)
+                {
+                    if(data.pollIndexFd0 < 0)
+                    {
+                        if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
+                        {
+                            return ProcessResult::removeExecutorError;
+                        }
+                    }
+                }
+                else if(data.bytesInPipe == 0)
+                {
+                    if(data.pollIndexFd0 >= 0)
+                    {
+                        if(loop->removePollFd(data, data.fd0) != 0)
+                        {
+                            return ProcessResult::removeExecutorError;
+                        }
+                    }
+                    if(data.pollIndexFd1 < 0)
+                    {
+                        if(loop->addPollFd(data, data.fd1, EPOLLIN) != 0)
+                        {
+                            return ProcessResult::removeExecutorError;
+                        }
+                    }
+                }
+            }
+        }
+
+        ++data.retryCounter;
+        return ProcessResult::ok;
     }
     else
     {
-        data.retryCounter = 0;
+        if(data.state == ExecutorData::State::forwardResponseOnlyWrite)
+        {
+            return ProcessResult::removeExecutorOk;
+        }
+        else
+        {
+            ++data.retryCounter;
+            return ProcessResult::ok;
+        }
     }
-
-    return ProcessResult::ok;
-}
-
-
-ProcessResult ProxyExecutorSplice::process_forwardResponseOnlyWrite(ExecutorData &data)
-{
-    int bytes = splice(data.pipeReadFd, NULL, data.fd0, NULL, 10000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
-
-    if(bytes == 0)
-    {
-        return ProcessResult::removeExecutorOk;
-    }
-    else if(bytes < 0)
-    {
-        log->error("splice failed: %s\n", strerror(errno));
-        return ProcessResult::removeExecutorError;
-    }
-
-    return ProcessResult::ok;
 }
 
 

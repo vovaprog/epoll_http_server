@@ -46,6 +46,7 @@ struct ExecutorData
 
     int pipeReadFd = -1;
     int pipeWriteFd = -1;
+    int bytesInPipe = 0;
 
     long long int bytesToSend = 0;
     off_t filePosition = 0;

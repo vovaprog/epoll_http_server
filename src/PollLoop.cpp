@@ -216,7 +216,19 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
 
     if(fd != data.fd0 && fd != data.fd1)
     {
-        log->error("invalid argument\n");
+        log->error("addPollFd invalid fd argument\n");
+        return -1;
+    }
+
+    if(fd == data.fd0 && data.pollIndexFd0 >= 0)
+    {
+        log->error("addPollFd: pollIndexFd0 >= 0\n");
+        return -1;
+    }
+
+    if(fd == data.fd1 && data.pollIndexFd1 >= 0)
+    {
+        log->error("addPollFd: pollIndexFd1 >= 0\n");
         return -1;
     }
 

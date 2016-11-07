@@ -140,6 +140,8 @@ ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
     {
         int bytesRead = read(data.fd1, p, size);
 
+        log->debug("proxy read bytes: %d\n", bytesRead);
+
         if(bytesRead <= 0)
         {
             if(bytesRead == 0)
@@ -183,6 +185,8 @@ ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
         int errorCode = 0;
         int bytesWritten = writeFd0(data, p, size, errorCode);
 
+        log->debug("proxy write bytes: %d\n", bytesWritten);
+
         if(bytesWritten <= 0)
         {
             if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
@@ -214,6 +218,8 @@ ProcessResult ProxyExecutor::process_forwardResponseOnlyWrite(ExecutorData &data
     {
         int errorCode = 0;
         int bytesWritten = writeFd0(data, p, size, errorCode);
+
+        log->debug("proxy write bytes: %d\n", bytesWritten);
 
         if(bytesWritten <= 0)
         {

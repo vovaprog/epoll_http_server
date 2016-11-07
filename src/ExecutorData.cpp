@@ -36,6 +36,7 @@ void ExecutorData::down()
         close(pipeWriteFd);
         pipeWriteFd = -1;
     }
+    bytesInPipe = 0;
 
     state = State::invalid;
     pExecutor = nullptr;

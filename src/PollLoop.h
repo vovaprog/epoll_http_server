@@ -12,6 +12,7 @@
 #include <SslRequestExecutor.h>
 #include <SslFileExecutor.h>
 #include <SslProxyExecutor.h>
+#include <ProxyExecutorSplice.h>
 
 #include <PollData.h>
 
@@ -87,7 +88,8 @@ protected:
     SslRequestExecutor sslRequestExecutor;
     FileExecutor fileExecutor;
     SslFileExecutor sslFileExecutor;
-    ProxyExecutor proxyExecutor;
+    //ProxyExecutor proxyExecutor;
+    ProxyExecutorSplice proxyExecutor;
     SslProxyExecutor sslProxyExecutor;
 
 

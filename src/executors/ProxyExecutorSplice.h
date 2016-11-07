@@ -28,8 +28,6 @@ protected:
 
     ProcessResult process_forwardResponseWrite(ExecutorData &data);
 
-    ProcessResult process_forwardResponseOnlyWrite(ExecutorData &data);
-
     ProcessResult process_waitConnect(ExecutorData &data);
 };
 
