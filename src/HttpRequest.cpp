@@ -38,7 +38,7 @@ HttpRequest::ParseResult HttpRequest::postParse()
 }
 
 
-const char* HttpRequest::getUrl()
+const char* HttpRequest::getUrl() const
 {
     if(state != State::finishOk)
     {
@@ -81,7 +81,7 @@ int HttpRequest::decodeUrl()
 }
 
 
-int HttpRequest::checkUrl()
+int HttpRequest::checkUrl() const
 {
     char prevChar = 0;
 
@@ -105,14 +105,14 @@ int HttpRequest::checkUrl()
 }
 
 
-int HttpRequest::getHeaderValue(const char *key, const char **ptr, int *size)
+int HttpRequest::getHeaderValue(const char *key, const char **ptr, int *size) const
 {
     if(state != State::finishOk)
     {
         return -1;
     }
 
-    for(Header & head : headers)
+    for(const Header & head : headers)
     {
         if(strncasecmp(key, data + head.key.start, head.key.length) == 0)
         {
@@ -126,7 +126,7 @@ int HttpRequest::getHeaderValue(const char *key, const char **ptr, int *size)
 }
 
 
-time_t HttpRequest::getIfModifiedSince()
+time_t HttpRequest::getIfModifiedSince() const
 {
     const char *ptr;
     int length;
@@ -153,7 +153,7 @@ time_t HttpRequest::getIfModifiedSince()
 }
 
 
-bool HttpRequest::isUrlPrefix(const char *prefix)
+bool HttpRequest::isUrlPrefix(const char *prefix) const
 {
     if(state != State::finishOk)
     {
@@ -195,7 +195,7 @@ bool HttpRequest::isUrlPrefix(const char *prefix)
 }
 
 
-int HttpRequest::print()
+int HttpRequest::print() const
 {
     if(methodLength > 0)
     {

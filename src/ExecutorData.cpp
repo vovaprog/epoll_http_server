@@ -60,7 +60,7 @@ void ExecutorData::down()
 }
 
 
-void ExecutorData::writeLog(Log *log, Log::Level level, const char *title)
+void ExecutorData::writeLog(Log *log, Log::Level level, const char *title) const
 {
     const char *execString;
     if(pExecutor != nullptr)

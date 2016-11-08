@@ -12,7 +12,7 @@ public:
 
     ProcessResult process(ExecutorData &data, int fd, int events) override;
 
-    const char* name() override
+    const char* name() const override
     {
         return "sslserver";
     }

@@ -79,7 +79,7 @@ public:
         writeHead += size;
     }
 
-    bool startRead(void* &data, int &size)
+    bool startRead(void* &data, int &size) const
     {
         data = buf + readHead;
 
@@ -112,7 +112,7 @@ public:
         }
     }
 
-    bool readAvailable()
+    bool readAvailable() const
     {
         void *data;
         int size;

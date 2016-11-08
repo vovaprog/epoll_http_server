@@ -579,7 +579,7 @@ int PollLoop::closeFd(ExecutorData &data, int fd)
 }
 
 
-void PollLoop::logStats()
+void PollLoop::logStats() const
 {
     unsigned long long int tid = pthread_self();
     char tidBuf[30];

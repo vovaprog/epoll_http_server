@@ -32,7 +32,7 @@ struct ServerParameters
 
     int load(const char *fileName);
 
-    void writeToLog(Log *log);
+    void writeToLog(Log *log) const;
 
 
     std::string rootFolder;

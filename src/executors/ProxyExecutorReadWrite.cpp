@@ -65,7 +65,7 @@ ProcessResult ProxyExecutorReadWrite::process(ExecutorData &data, int fd, int ev
         return process_forwardResponseRead(data);
     }
     if((data.state == ExecutorData::State::forwardResponse ||
-        data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
+            data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_forwardResponseWrite(data);
     }

@@ -197,7 +197,7 @@ int ServerParameters::load(const char *fileName)
     return 0;
 }
 
-void ServerParameters::writeToLog(Log *log)
+void ServerParameters::writeToLog(Log *log) const
 {
     log->info("----- server parameters -----\n");
     log->info("rootFolder: %s\n", rootFolder.c_str());
@@ -216,7 +216,7 @@ void ServerParameters::writeToLog(Log *log)
     {
         log->info("httpsPort: %d\n", port);
     }
-    for(ProxyParameters & proxy : proxies)
+    for(const ProxyParameters & proxy : proxies)
     {
         const char *conTypeString = "none";
 

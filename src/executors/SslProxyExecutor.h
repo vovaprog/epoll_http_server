@@ -7,7 +7,7 @@ class SslProxyExecutor: public ProxyExecutorReadWrite
 {
 public:
 
-    const char* name() override
+    const char* name() const override
     {
         return "sslproxy";
     }

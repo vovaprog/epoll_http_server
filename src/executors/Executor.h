@@ -17,7 +17,7 @@ public:
 
     virtual ProcessResult process(ExecutorData &data, int fd, int events) = 0;
 
-    virtual const char *name() = 0;
+    virtual const char *name() const = 0;
 
 protected:
 

@@ -21,7 +21,7 @@ struct ExecutorData
 
     void down();
 
-    void writeLog(Log *log, Log::Level level, const char *title);
+    void writeLog(Log *log, Log::Level level, const char *title) const;
 
 
     static const int REQUEST_BUFFER_SIZE = 10000;

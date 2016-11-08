@@ -76,7 +76,7 @@ protected:
 
     int createRequestExecutorInternal(int fd, ExecutorType execType);
 
-    void logStats();
+    void logStats() const;
 
 
 protected:

@@ -25,15 +25,15 @@ public:
 
     ParseResult parse(const char *data, int size);
 
-    const char* getUrl();
+    const char* getUrl() const;
 
-    int getHeaderValue(const char *key, const char **ptr, int *size);
+    int getHeaderValue(const char *key, const char **ptr, int *size) const;
 
-    time_t getIfModifiedSince();
+    time_t getIfModifiedSince() const;
 
-    int print();
+    int print() const;
 
-    bool isUrlPrefix(const char *prefix);
+    bool isUrlPrefix(const char *prefix) const;
 
 
 protected:
@@ -61,7 +61,7 @@ protected:
     ParseResult postParse();
 
     int decodeUrl();
-    int checkUrl();
+    int checkUrl() const;
 
     static int percentDecode(const char *src, char *dst, int srcLength);
     static int hex2int(char c);

@@ -45,7 +45,6 @@ set(SOURCE
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h
-    utils/FileUtils.h          utils/FileUtils.cpp
     utils/NetworkUtils.h       utils/NetworkUtils.cpp
     utils/TimeUtils.h          utils/TimeUtils.cpp
     utils/SslUtils.h           utils/SslUtils.cpp)

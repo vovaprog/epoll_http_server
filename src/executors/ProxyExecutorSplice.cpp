@@ -67,7 +67,7 @@ ProcessResult ProxyExecutorSplice::process(ExecutorData &data, int fd, int event
         return process_forwardResponseRead(data);
     }
     if((data.state == ExecutorData::State::forwardResponse ||
-        data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
+            data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_forwardResponseWrite(data);
     }
@@ -251,10 +251,10 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &da
             {
                 if(data.state == ExecutorData::State::forwardResponseOnlyWrite)
                 {
-                     if(data.bytesInPipe == 0)
-                     {
-                         return ProcessResult::removeExecutorOk;
-                     }
+                    if(data.bytesInPipe == 0)
+                    {
+                        return ProcessResult::removeExecutorOk;
+                    }
                 }
 
                 if(data.bytesInPipe > 0)

@@ -23,7 +23,7 @@ public:
 
     int createRequestExecutor(int fd, ExecutorType execType) override;
 
-    void logStats();
+    void logStats() const;
 
     static int  staticInit();
     static void staticDestroy();

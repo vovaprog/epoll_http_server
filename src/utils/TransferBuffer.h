@@ -32,7 +32,7 @@ public:
         readHead = 0;
     }
 
-    bool startWrite(void* &data, int &size)
+    bool startWrite(void* &data, int &size) const
     {
         if(writeHead >= bufSize)
         {
@@ -50,7 +50,7 @@ public:
         writeHead += size;
     }
 
-    bool startRead(void* &data, int &size)
+    bool startRead(void* &data, int &size) const
     {
         data = buf + readHead;
         size = writeHead - readHead;
@@ -63,14 +63,14 @@ public:
         readHead += size;
     }
 
-    bool readAvailable()
+    bool readAvailable() const
     {
         void *data;
         int size;
         return startRead(data, size);
     }
 
-    void* getDataPtr()
+    void* getDataPtr() const
     {
         return buf;
     }

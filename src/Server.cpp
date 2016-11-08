@@ -292,7 +292,7 @@ int Server::createRequestExecutor(int fd, ExecutorType execType)
 }
 
 
-void Server::logStats()
+void Server::logStats() const
 {
     int totalNumberOfFds = 0;
 
