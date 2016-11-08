@@ -1,9 +1,9 @@
-#ifndef PROXY_EXECUTOR_H
-#define PROXY_EXECUTOR_H
+#ifndef PROXY_EXECUTOR_READ_WRITE_H
+#define PROXY_EXECUTOR_READ_WRITE_H
 
 #include <Executor.h>
 
-class ProxyExecutor: public Executor
+class ProxyExecutorReadWrite: public Executor
 {
 public:
 
@@ -15,7 +15,7 @@ public:
 
     const char* name() override
     {
-        return "proxy";
+        return "proxyrw";
     }
 
 protected:
@@ -25,8 +25,6 @@ protected:
     ProcessResult process_forwardResponseRead(ExecutorData &data);
 
     ProcessResult process_forwardResponseWrite(ExecutorData &data);
-
-    ProcessResult process_forwardResponseOnlyWrite(ExecutorData &data);
 
     ProcessResult process_waitConnect(ExecutorData &data);
 };

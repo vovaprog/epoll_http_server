@@ -15,7 +15,7 @@ public:
 
     const char* name() override
     {
-        return "proxy";
+        return "proxysplice";
     }
 
 protected:

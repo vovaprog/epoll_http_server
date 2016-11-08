@@ -1,9 +1,9 @@
 #ifndef SSL_PROXY_EXECUTOR_H
 #define SSL_PROXY_EXECUTOR_H
 
-#include <ProxyExecutor.h>
+#include <ProxyExecutorReadWrite.h>
 
-class SslProxyExecutor: public ProxyExecutor
+class SslProxyExecutor: public ProxyExecutorReadWrite
 {
 public:
 

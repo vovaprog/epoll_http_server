@@ -1,4 +1,4 @@
-#include <ProxyExecutor.h>
+#include <ProxyExecutorReadWrite.h>
 #include <PollLoopBase.h>
 #include <NetworkUtils.h>
 
@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-int ProxyExecutor::init(PollLoopBase *loop)
+int ProxyExecutorReadWrite::init(PollLoopBase *loop)
 {
     this->loop = loop;
     this->log = loop->log;
@@ -14,7 +14,7 @@ int ProxyExecutor::init(PollLoopBase *loop)
 }
 
 
-int ProxyExecutor::up(ExecutorData &data)
+int ProxyExecutorReadWrite::up(ExecutorData &data)
 {
     data.removeOnTimeout = true;
 
@@ -50,7 +50,7 @@ int ProxyExecutor::up(ExecutorData &data)
 }
 
 
-ProcessResult ProxyExecutor::process(ExecutorData &data, int fd, int events)
+ProcessResult ProxyExecutorReadWrite::process(ExecutorData &data, int fd, int events)
 {
     if(data.state == ExecutorData::State::waitConnect && fd == data.fd1 && (events & EPOLLOUT))
     {
@@ -64,13 +64,10 @@ ProcessResult ProxyExecutor::process(ExecutorData &data, int fd, int events)
     {
         return process_forwardResponseRead(data);
     }
-    if(data.state == ExecutorData::State::forwardResponse && fd == data.fd0 && (events & EPOLLOUT))
+    if((data.state == ExecutorData::State::forwardResponse ||
+        data.state == ExecutorData::State::forwardResponseOnlyWrite) && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_forwardResponseWrite(data);
-    }
-    if(data.state == ExecutorData::State::forwardResponseOnlyWrite && fd == data.fd0 && (events & EPOLLOUT))
-    {
-        return process_forwardResponseOnlyWrite(data);
     }
 
     loop->log->warning("invalid process call (proxy)\n");
@@ -78,7 +75,7 @@ ProcessResult ProxyExecutor::process(ExecutorData &data, int fd, int events)
 }
 
 
-ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
+ProcessResult ProxyExecutorReadWrite::process_forwardRequest(ExecutorData &data)
 {
     void *p;
     int size;
@@ -110,10 +107,6 @@ ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
 
             data.state = ExecutorData::State::forwardResponse;
 
-            if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
-            {
-                return ProcessResult::removeExecutorError;
-            }
             if(loop->editPollFd(data, data.fd1, EPOLLIN) != 0)
             {
                 return ProcessResult::removeExecutorError;
@@ -131,7 +124,7 @@ ProcessResult ProxyExecutor::process_forwardRequest(ExecutorData &data)
 }
 
 
-ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
+ProcessResult ProxyExecutorReadWrite::process_forwardResponseRead(ExecutorData &data)
 {
     void *p;
     int size;
@@ -148,7 +141,7 @@ ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
             {
                 loop->closeFd(data, data.fd1);
                 data.state = ExecutorData::State::forwardResponseOnlyWrite;
-                return ProcessResult::ok;
+                return process_forwardResponseWrite(data);
             }
             else if(errno == EAGAIN || errno == EWOULDBLOCK)
             {
@@ -161,21 +154,38 @@ ProcessResult ProxyExecutor::process_forwardResponseRead(ExecutorData &data)
                 return ProcessResult::removeExecutorError;
             }
         }
-        else
+        else // bytesRead > 0
         {
             data.retryCounter = 0;
             data.buffer.endWrite(bytesRead);
-            return ProcessResult::ok;
+            return process_forwardResponseWrite(data);
         }
     }
-    else
+    else // no place in buffer
     {
+        if(data.pollIndexFd1 >= 0)
+        {
+            if(loop->removePollFd(data, data.fd1) != 0)
+            {
+                return ProcessResult::removeExecutorError;
+            }
+        }
+
+        if(data.pollIndexFd0 < 0)
+        {
+            if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
+            {
+                return ProcessResult::removeExecutorError;
+            }
+        }
+
+        ++data.retryCounter;
         return ProcessResult::ok;
     }
 }
 
 
-ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
+ProcessResult ProxyExecutorReadWrite::process_forwardResponseWrite(ExecutorData &data)
 {
     void *p;
     int size;
@@ -191,6 +201,14 @@ ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
         {
             if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
+                if(data.pollIndexFd0 < 0)
+                {
+                    if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
+                    {
+                        return ProcessResult::removeExecutorError;
+                    }
+                }
+
                 ++data.retryCounter;
                 return ProcessResult::ok;
             }
@@ -200,60 +218,49 @@ ProcessResult ProxyExecutor::process_forwardResponseWrite(ExecutorData &data)
                 return ProcessResult::removeExecutorError;
             }
         }
-        data.retryCounter = 0;
+        else // bytesWritten > 0
+        {
+            data.retryCounter = 0;
+            data.buffer.endRead(bytesWritten);
 
-        data.buffer.endRead(bytesWritten);
+            if(data.state == ExecutorData::State::forwardResponseOnlyWrite && !data.buffer.readAvailable())
+            {
+                return ProcessResult::removeExecutorOk;
+            }
+
+            if(data.pollIndexFd1 < 0 && data.state == ExecutorData::State::forwardResponse)
+            {
+                if(loop->addPollFd(data, data.fd1, EPOLLIN) != 0)
+                {
+                    return ProcessResult::removeExecutorError;
+                }
+            }
+
+            return ProcessResult::ok;
+        }
+    }
+    else // no data in buffer
+    {
+        if(data.state == ExecutorData::State::forwardResponseOnlyWrite)
+        {
+            return ProcessResult::removeExecutorOk;
+        }
+
+        if(data.pollIndexFd0 >= 0)
+        {
+            if(loop->removePollFd(data, data.fd0) != 0)
+            {
+                return ProcessResult::removeExecutorError;
+            }
+        }
     }
 
+    ++data.retryCounter;
     return ProcessResult::ok;
 }
 
 
-ProcessResult ProxyExecutor::process_forwardResponseOnlyWrite(ExecutorData &data)
-{
-    void *p;
-    int size;
-
-    if(data.buffer.startRead(p, size))
-    {
-        int errorCode = 0;
-        int bytesWritten = writeFd0(data, p, size, errorCode);
-
-        log->debug("proxy write bytes: %d\n", bytesWritten);
-
-        if(bytesWritten <= 0)
-        {
-            if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
-            {
-                ++data.retryCounter;
-                return ProcessResult::ok;
-            }
-            else
-            {
-                log->error("writeFd0 failed: %s\n", strerror(errorCode));
-                return ProcessResult::removeExecutorError;
-            }
-        }
-        data.retryCounter = 0;
-
-        data.buffer.endRead(bytesWritten);
-
-        if(bytesWritten == size && !data.buffer.readAvailable())
-        {
-            return ProcessResult::removeExecutorOk;
-        }
-        else
-        {
-            return ProcessResult::ok;
-        }
-    }
-    else
-    {
-        return ProcessResult::removeExecutorOk;
-    }
-}
-
-ProcessResult ProxyExecutor::process_waitConnect(ExecutorData &data)
+ProcessResult ProxyExecutorReadWrite::process_waitConnect(ExecutorData &data)
 {
     int socketError = socketConnectNonBlockCheck(data.fd1, log);
 

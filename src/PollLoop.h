@@ -7,7 +7,7 @@
 #include <ServerExecutor.h>
 #include <RequestExecutor.h>
 #include <FileExecutor.h>
-#include <ProxyExecutor.h>
+#include <ProxyExecutorReadWrite.h>
 #include <SslServerExecutor.h>
 #include <SslRequestExecutor.h>
 #include <SslFileExecutor.h>
@@ -88,7 +88,6 @@ protected:
     SslRequestExecutor sslRequestExecutor;
     FileExecutor fileExecutor;
     SslFileExecutor sslFileExecutor;
-    //ProxyExecutor proxyExecutor;
     ProxyExecutorSplice proxyExecutor;
     SslProxyExecutor sslProxyExecutor;
 

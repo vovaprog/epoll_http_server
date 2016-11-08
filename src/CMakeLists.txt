@@ -31,17 +31,17 @@ set(SOURCE
     log/LogMmap.h   log/LogMmap.cpp
     log/LogStdout.h log/LogStdout.cpp
 
-    executors/Executor.h           executors/Executor.cpp
-    executors/ServerExecutor.h     executors/ServerExecutor.cpp
-    executors/SslServerExecutor.h  executors/SslServerExecutor.cpp
-    executors/RequestExecutor.h    executors/RequestExecutor.cpp
-    executors/FileExecutor.h       executors/FileExecutor.cpp
-    executors/NewFdExecutor.h      executors/NewFdExecutor.cpp
-    executors/SslRequestExecutor.h executors/SslRequestExecutor.cpp
-    executors/SslFileExecutor.h    executors/SslFileExecutor.cpp
-    executors/SslProxyExecutor.h   executors/SslProxyExecutor.cpp
-    executors/ProxyExecutor.h      executors/ProxyExecutor.cpp
-    executors/ProxyExecutorSplice.h      executors/ProxyExecutorSplice.cpp
+    executors/Executor.h               executors/Executor.cpp
+    executors/ServerExecutor.h         executors/ServerExecutor.cpp
+    executors/SslServerExecutor.h      executors/SslServerExecutor.cpp
+    executors/RequestExecutor.h        executors/RequestExecutor.cpp
+    executors/FileExecutor.h           executors/FileExecutor.cpp
+    executors/NewFdExecutor.h          executors/NewFdExecutor.cpp
+    executors/SslRequestExecutor.h     executors/SslRequestExecutor.cpp
+    executors/SslFileExecutor.h        executors/SslFileExecutor.cpp
+    executors/SslProxyExecutor.h       executors/SslProxyExecutor.cpp
+    executors/ProxyExecutorReadWrite.h executors/ProxyExecutorReadWrite.cpp
+    executors/ProxyExecutorSplice.h    executors/ProxyExecutorSplice.cpp
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h
