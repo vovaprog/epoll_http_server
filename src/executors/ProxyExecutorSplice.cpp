@@ -72,7 +72,7 @@ ProcessResult ProxyExecutorSplice::process(ExecutorData &data, int fd, int event
         return process_forwardResponseWrite(data);
     }
 
-    loop->log->warning("invalid process call (proxy)\n");
+    log->warning("invalid process call (proxy)\n");
     return ProcessResult::removeExecutorError;
 }
 

@@ -70,7 +70,7 @@ ProcessResult ProxyExecutorReadWrite::process(ExecutorData &data, int fd, int ev
         return process_forwardResponseWrite(data);
     }
 
-    loop->log->warning("invalid process call (proxy)\n");
+    log->warning("invalid process call (proxy)\n");
     return ProcessResult::removeExecutorError;
 }
 
@@ -118,7 +118,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardRequest(ExecutorData &data)
     }
     else
     {
-        loop->log->error("buffer.startRead failed\n");
+        log->error("buffer.startRead failed\n");
         return ProcessResult::removeExecutorError;
     }
 }
