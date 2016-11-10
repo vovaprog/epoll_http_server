@@ -273,8 +273,10 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
     {
         pollIndex = data.pollIndexFd1;
     }
-    else
+
+    if(pollIndex < 0)
     {
+        log->error("editPollFd: pollIndex < 0\n");
         return -1;
     }
 

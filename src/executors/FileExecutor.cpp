@@ -67,17 +67,15 @@ int FileExecutor::up(ExecutorData &data)
         {
             return -1;
         }
-        if(loop->editPollFd(data, data.fd0, EPOLLOUT) != 0)
+        data.state = ExecutorData::State::sendOnlyHeaders;
+    }
+    else
+    {
+        if(createOkResponse(data, lastModified) != 0)
         {
             return -1;
         }
-        data.state = ExecutorData::State::sendOnlyHeaders;
-        return 0;
-    }
-
-    if(createOkResponse(data, lastModified) != 0)
-    {
-        return -1;
+        data.state = ExecutorData::State::sendHeaders;
     }
 
     if(loop->editPollFd(data, data.fd0, EPOLLOUT) != 0)
@@ -85,25 +83,20 @@ int FileExecutor::up(ExecutorData &data)
         return -1;
     }
 
-    data.state = ExecutorData::State::sendHeaders;
-
     return 0;
 }
 
 
 ProcessResult FileExecutor::process(ExecutorData &data, int fd, int events)
 {
-    if(data.state == ExecutorData::State::sendHeaders && fd == data.fd0 && (events & EPOLLOUT))
+    if((data.state == ExecutorData::State::sendHeaders || data.state == ExecutorData::State::sendOnlyHeaders) &&
+        fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_sendHeaders(data);
     }
     if(data.state == ExecutorData::State::sendFile && fd == data.fd0 && (events & EPOLLOUT))
     {
         return process_sendFile(data);
-    }
-    if(data.state == ExecutorData::State::sendOnlyHeaders && fd == data.fd0 && (events & EPOLLOUT))
-    {
-        return process_sendHeaders(data);
     }
 
     log->warning("invalid process call (file)\n");
