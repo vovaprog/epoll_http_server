@@ -4,6 +4,7 @@
 #include <LogMmap.h>
 
 #include <pthread.h>
+#include <signal.h>
 #include <climits>
 #include <mutex>
 #include <openssl/bio.h>
@@ -37,6 +38,17 @@ static void sslLockCallback(int mode, int type, const char *file, int line)
 
 int Server::staticInit()
 {
+    // ignore SIGPIPE
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+
+    if(sigaction(SIGPIPE, &sa, NULL) != 0)
+    {
+        perror("sigaction failed\n");
+    }
+
     return 0;
 }
 

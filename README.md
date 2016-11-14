@@ -11,5 +11,6 @@ Simple http server using epoll and non-blocking sockets.
 * splice
 * sendfile
 * memory mapped files
+* sigaction
 * c++ 11 threads
 * openssl

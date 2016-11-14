@@ -6,12 +6,33 @@
 
 std::atomic_bool runFlag;
 
-static void sig_int_handler(int i)
+
+static void sigIntHandler(int signalNumber)
 {
     printf("sig int\n");
 
     runFlag.store(false);
 }
+
+
+static int installSigIntHandler()
+{
+    runFlag.store(true);
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_handler = sigIntHandler;
+    sa.sa_flags = 0;
+
+    if(sigaction(SIGINT, &sa, NULL) != 0)
+    {
+        perror("sigaction failed");
+        return -1;
+    }
+
+    return 0;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -24,8 +45,10 @@ int main(int argc, char** argv)
         fileName = argv[1];
     }
 
-    runFlag.store(true);
-    signal(SIGINT, sig_int_handler);
+    if(installSigIntHandler() != 0)
+    {
+        return -1;
+    }
 
     Server::staticInit();
 

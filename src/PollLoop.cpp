@@ -2,7 +2,6 @@
 #include <TimeUtils.h>
 
 #include <sys/epoll.h>
-#include <signal.h>
 #include <sys/eventfd.h>
 
 
@@ -57,8 +56,6 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
 
 int PollLoop::run()
 {
-    signal(SIGPIPE, SIG_IGN);
-
     runFlag.store(true);
 
     while(epollFd > 0 && runFlag.load())
