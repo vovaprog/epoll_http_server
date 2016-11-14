@@ -60,7 +60,7 @@ int PollLoop::run()
 
     while(epollFd > 0 && runFlag.load())
     {
-        int nEvents = epoll_wait(epollFd, events, MAX_EVENTS, parameters->executorTimeoutMillis);
+        int nEvents = epoll_wait(epollFd, events, MAX_EPOLL_EVENTS, parameters->executorTimeoutMillis);
         if(nEvents == -1)
         {
             if(errno == EINTR)
@@ -84,27 +84,33 @@ int PollLoop::run()
         for(int i = 0; i < nEvents; ++i)
         {
             PollData *pollData = static_cast<PollData*>(events[i].data.ptr);
-            ExecutorData &execData = execDatas[pollData->executorDataIndex];
+            ExecutorData *execData = getExecData(pollData->executorDataIndex);
 
-            if(execData.state != ExecutorData::State::invalid)
+            if(execData == nullptr)
             {
-                if(((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR)) && pollData->fd == execData.fd0)
+                log->error("failed to get ExecutorData[%d]\n", pollData->executorDataIndex);
+                continue;
+            }
+
+            if(execData->state != ExecutorData::State::invalid)
+            {
+                if(((events[i].events & EPOLLRDHUP) || (events[i].events & EPOLLERR)) && pollData->fd == execData->fd0)
                 {
                     log->debug("received EPOLLRDHUP or EPOLLERR event on fd\n");
-                    removeExecutorData(&execData);
+                    removeExecutorData(execData);
                 }
                 else
                 {
-                    ProcessResult result = execData.pExecutor->process(execData, pollData->fd, events[i].events);
+                    ProcessResult result = execData->pExecutor->process(*execData, pollData->fd, events[i].events);
 
                     if(result == ProcessResult::removeExecutorOk)
                     {
-                        removeExecutorData(&execData);
+                        removeExecutorData(execData);
                     }
                     else if(result == ProcessResult::removeExecutorError)
                     {
-                        execData.writeLog(log, Log::Level::warning, "removeExecutorError");
-                        removeExecutorData(&execData);
+                        execData->writeLog(log, Log::Level::warning, "removeExecutorError");
+                        removeExecutorData(execData);
                     }
                     else if(result == ProcessResult::shutdown)
                     {
@@ -113,14 +119,14 @@ int PollLoop::run()
                     }
                     else
                     {
-                        if(execData.retryCounter > ExecutorData::MAX_RETRY_COUNTER)
+                        if(execData->retryCounter > ExecutorData::MAX_RETRY_COUNTER)
                         {
                             log->warning("retryCounter > MAX_RETRY_COUNTER. destroy executor\n");
-                            removeExecutorData(&execData);
+                            removeExecutorData(execData);
                         }
                         else
                         {
-                            execData.lastProcessTime = curMillis;
+                            execData->lastProcessTime = curMillis;
                         }
                     }
                 }
@@ -231,17 +237,24 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
 
     int pollIndex = emptyPollDatas.top();
 
+    PollData *pollData = getPollData(pollIndex);
+    if(pollData == nullptr)
+    {
+        log->error("getPollData(%d) failed\n", pollIndex);
+        return -1;
+    }
+
     epoll_event ev;
     ev.events = (events | EPOLLRDHUP | EPOLLERR);
-    ev.data.ptr = &pollDatas[pollIndex];
+    ev.data.ptr = pollData;
     if(epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
     {
         log->error("epoll_ctl add failed: %s\n", strerror(errno));
         return -1;
     }
 
-    pollDatas[pollIndex].fd = fd;
-    pollDatas[pollIndex].executorDataIndex = data.index;
+    pollData->fd = fd;
+    pollData->executorDataIndex = data.index;
 
     if(fd == data.fd0)
     {
@@ -277,9 +290,18 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
         return -1;
     }
 
+
+    PollData *pollData = getPollData(pollIndex);
+    if(pollData == nullptr)
+    {
+        log->error("getPollData(%d) failed\n", pollIndex);
+        return -1;
+    }
+
+
     epoll_event ev;
     ev.events = (events | EPOLLRDHUP | EPOLLERR);
-    ev.data.ptr = &pollDatas[pollIndex];
+    ev.data.ptr = pollData;
     if(epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1)
     {
         log->error("epoll_ctl mod failed: %s\n", strerror(errno));
@@ -358,21 +380,30 @@ void PollLoop::checkTimeout(long long int curMillis)
 
     for(int i : usedExecDatas)
     {
-        if(execDatas[i].removeOnTimeout)
+        ExecutorData *execData = getExecData(i);
+
+        if(execData == nullptr)
         {
-            if((curMillis - execDatas[i].lastProcessTime > parameters->executorTimeoutMillis) ||
-                    (curMillis - execDatas[i].createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
+            log->error("can't get execData[%d]\n", i);
+        }
+        else
+        {
+            if(execData->removeOnTimeout)
             {
-                //can't remove here, because removeExecutorData modifies usedExecDatas
-                removeExecDatas.push_back(i);
-                execDatas[i].writeLog(log, Log::Level::debug, "timeout remove executor");
+                if((curMillis - execData->lastProcessTime > parameters->executorTimeoutMillis) ||
+                        (curMillis - execData->createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
+                {
+                    //can't remove here, because removeExecutorData modifies usedExecDatas
+                    removeExecDatas.push_back(execData);
+                    execData->writeLog(log, Log::Level::debug, "timeout remove executor");
+                }
             }
         }
     }
 
-    for(int i : removeExecDatas)
+    for(ExecutorData *execData : removeExecDatas)
     {
-        removeExecutorData(&execDatas[i]);
+        removeExecutorData(execData);
     }
 
     lastCheckTimeoutMillis = curMillis;
@@ -418,11 +449,6 @@ void PollLoop::destroy()
         delete[] pollDatas;
         pollDatas = nullptr;
     }
-    if(events != nullptr)
-    {
-        delete[] events;
-        events = nullptr;
-    }
     if(epollFd > 0)
     {
         close(epollFd);
@@ -438,26 +464,49 @@ void PollLoop::destroy()
 
 int PollLoop::initDataStructs()
 {
-    MAX_EXECUTORS = parameters->maxClients;
-    MAX_EVENTS = MAX_EXECUTORS * 2;
+    execDataBlocks = 1000;
+    execDataBlockSize = 100;
 
-    execDatas = new ExecutorData[MAX_EXECUTORS];
-    pollDatas = new PollData[MAX_EVENTS];
-    events = new epoll_event[MAX_EVENTS];
+    pollDataBlocks = 2000;
+    pollDataBlockSize = 100;
 
-    for(int i = MAX_EXECUTORS - 1; i >= 0; --i)
+    int maxExecutors = execDataBlocks * execDataBlockSize; 
+    int maxEvents = pollDataBlocks * pollDataBlockSize;
+  
+
+    execDatas = new ExecutorData*[execDataBlocks];
+    execDatas[0] = new ExecutorData[execDataBlockSize];
+
+    for(int i = 1; i < execDataBlocks; ++i)
+    {
+        execDatas[i] = nullptr;
+    }
+    for(int i = 0; i < execDataBlockSize; ++i)
+    {
+        execDatas[0][i].index = i;
+    }
+
+
+    pollDatas = new PollData*[pollDataBlocks];
+    pollDatas[0] = new PollData[pollDataBlockSize];
+
+    for(int i = 1; i < pollDataBlocks; ++i)
+    {
+        pollDatas[i] = nullptr;
+    }
+
+
+
+    for(int i = maxExecutors - 1; i >= 0; --i)
     {
         emptyExecDatas.push(i);
     }
-    for(int i = MAX_EVENTS - 1; i >= 0; --i)
+    for(int i = maxEvents - 1; i >= 0; --i)
     {
         emptyPollDatas.push(i);
     }
-    for(int i = 0; i < MAX_EXECUTORS; ++i)
-    {
-        execDatas[i].index = i;
-    }
     usedExecDatas.clear();
+
     return 0;
 }
 
@@ -501,10 +550,19 @@ ExecutorData* PollLoop::createExecutorData()
     usedExecDatas.insert(execIndex);
 
     long long int curMillis = getMilliseconds();
-    execDatas[execIndex].createTime = curMillis;
-    execDatas[execIndex].lastProcessTime = curMillis;
 
-    return &execDatas[execIndex];
+    ExecutorData *execData = getExecData(execIndex);
+
+    if(execData == nullptr)
+    {
+        log->error("getExecData(%d) failed\n", execIndex);
+        return nullptr;
+    }
+
+    execData->createTime = curMillis;
+    execData->lastProcessTime = curMillis;
+
+    return execData;
 }
 
 
@@ -578,7 +636,55 @@ int PollLoop::closeFd(ExecutorData &data, int fd)
 }
 
 
-void PollLoop::logStats() const
+ExecutorData* PollLoop::getExecData(int index)
+{
+    int blockIndex = index / execDataBlockSize;
+    int itemIndex = index % execDataBlockSize;
+    
+
+    if(blockIndex >= execDataBlocks || blockIndex < 0)
+    {
+        return nullptr;
+    }
+
+    if(execDatas[blockIndex] == nullptr)
+    {
+        execDatas[blockIndex] = new ExecutorData[execDataBlockSize];
+
+        int indexCounter = blockIndex * execDataBlockSize;
+        int indexLimit = indexCounter + execDataBlockSize;
+
+        for(;indexCounter < indexLimit; ++indexCounter)
+        {
+            execDatas[blockIndex][indexCounter].index = indexCounter;
+        }
+    }
+
+    return &execDatas[blockIndex][itemIndex];
+}
+
+
+PollData* PollLoop::getPollData(int index)
+{
+    int blockIndex = index / pollDataBlockSize;
+    int itemIndex = index % pollDataBlockSize;
+
+    if(blockIndex >= pollDataBlocks || blockIndex < 0)
+    {
+        return nullptr;
+    }
+
+    if(pollDatas[blockIndex] == nullptr)
+    {
+        pollDatas[blockIndex] = new PollData[pollDataBlockSize];
+    }
+
+    return &pollDatas[blockIndex][itemIndex];
+}
+
+
+
+void PollLoop::logStats()
 {
     unsigned long long int tid = pthread_self();
     char tidBuf[30];
@@ -588,7 +694,15 @@ void PollLoop::logStats() const
 
     for(int execIndex : usedExecDatas)
     {
-        execDatas[execIndex].writeLog(log, Log::Level::info, tidBuf);
+        ExecutorData *execData = getExecData(execIndex);
+        if(execData == nullptr)
+        {
+            log->error("getExecData(%d) failed\n", execIndex);
+        }
+        else
+        {
+            execData->writeLog(log, Log::Level::info, tidBuf);
+        }
     }
 
     log->info("[%s]>>>>>>>\n", tidBuf);

@@ -76,7 +76,10 @@ protected:
 
     int createRequestExecutorInternal(int fd, ExecutorType execType);
 
-    void logStats() const;
+    ExecutorData* getExecData(int index);
+    PollData* getPollData(int index);
+
+    void logStats();
 
 
 protected:
@@ -92,20 +95,23 @@ protected:
     SslProxyExecutor sslProxyExecutor;
 
 
-    ExecutorData *execDatas = nullptr;
-    PollData *pollDatas = nullptr;
-    epoll_event *events = nullptr;
+    ExecutorData **execDatas = nullptr;
+    PollData **pollDatas = nullptr;
+
+    static const int MAX_EPOLL_EVENTS = 1000;
+    epoll_event events[MAX_EPOLL_EVENTS];
 
     std::stack<int, std::vector<int>> emptyExecDatas;
     std::stack<int, std::vector<int>> emptyPollDatas;
 
     std::set<int> usedExecDatas;
-    std::vector<int> removeExecDatas;
+    std::vector<ExecutorData*> removeExecDatas;
 
     std::atomic_int numOfPollFds;
 
 
-    int MAX_EXECUTORS = 0, MAX_EVENTS = 0;
+    int execDataBlocks = 0, execDataBlockSize = 0;
+    int pollDataBlocks = 0, pollDataBlockSize = 0;
 
     std::atomic_bool runFlag;
 
