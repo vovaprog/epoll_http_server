@@ -26,7 +26,7 @@
 class PollLoop: public PollLoopBase
 {
 public:
-    PollLoop(): newFdsQueue(MAX_NEW_FDS) { }
+    PollLoop() = default;
 
     ~PollLoop()
     {
@@ -65,7 +65,7 @@ protected:
 
     void destroy();
 
-    int initDataStructs();
+    int initDataStructs(const ServerParameters *params);
 
     Executor* getExecutor(ExecutorType execType) override;
 
@@ -101,18 +101,13 @@ protected:
     std::vector<ExecutorData*> removeExecDatas;
 
 
-    std::atomic_bool runFlag;
-
-
-    static const int MAX_NEW_FDS = 1000;
-
     struct NewFdData
     {
         ExecutorType execType;
         int fd;
     };
 
-    boost::lockfree::spsc_queue<NewFdData> newFdsQueue;
+    boost::lockfree::spsc_queue<NewFdData, boost::lockfree::capacity<1000>> newFdsQueue;
     std::mutex newFdsMutex;
 
 
@@ -121,7 +116,11 @@ protected:
 
     long long int lastCheckTimeoutMillis = 0;
 
+
+    std::atomic_bool runFlag;
     std::atomic_int numOfPollFds;
 };
 
 #endif
+
+

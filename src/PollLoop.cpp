@@ -18,7 +18,7 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
     rootFolderLength = strlen(fileNameBuffer);
 
 
-    if(initDataStructs() != 0)
+    if(initDataStructs(params) != 0)
     {
         destroy();
         return -1;
@@ -443,13 +443,13 @@ void PollLoop::destroy()
 }
 
 
-int PollLoop::initDataStructs()
+int PollLoop::initDataStructs(const ServerParameters *params)
 {
-    if(execDatas.init(1000, 100) != 0)
+    if(execDatas.init(params->maxAllocationBlocks, params->allocationBlockSize) != 0)
     {
         return -1;
     }
-    if(pollDatas.init(1000, 200) != 0)
+    if(pollDatas.init(params->maxAllocationBlocks, params->allocationBlockSize * 2) != 0)
     {
         return -1;
     }

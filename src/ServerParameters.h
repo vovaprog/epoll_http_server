@@ -15,7 +15,6 @@ struct ServerParameters
 
     void setDefaults()
     {
-        maxClients = 1000;
         rootFolder = "./data";
         logFolder = "./log";
         threadCount = 1;
@@ -28,6 +27,8 @@ struct ServerParameters
         logArchiveCount = 10;
         executorTimeoutMillis = 10000;
         logStats = true;
+        maxAllocationBlocks = 1000;
+        allocationBlockSize = 100;
     }
 
     int load(const char *fileName);
@@ -38,7 +39,6 @@ struct ServerParameters
     std::string rootFolder;
     std::string logFolder;
 
-    int maxClients;
     int threadCount;
     int executorTimeoutMillis;
 
@@ -48,6 +48,9 @@ struct ServerParameters
     int logArchiveCount;
 
     bool logStats;
+
+    int maxAllocationBlocks;
+    int allocationBlockSize;
 
     std::vector<int> httpPorts;
     std::vector<int> httpsPorts;
