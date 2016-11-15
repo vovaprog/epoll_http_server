@@ -13,6 +13,7 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
 
     numOfPollFds.store(0);
 
+
     snprintf(fileNameBuffer, MAX_FILE_NAME, "%s/", params->rootFolder.c_str());
     rootFolderLength = strlen(fileNameBuffer);
 
@@ -84,11 +85,11 @@ int PollLoop::run()
         for(int i = 0; i < nEvents; ++i)
         {
             PollData *pollData = static_cast<PollData*>(events[i].data.ptr);
-            ExecutorData *execData = getExecData(pollData->executorDataIndex);
+            ExecutorData *execData = execDatas.get(pollData->executorDataIndex);
 
             if(execData == nullptr)
             {
-                log->error("failed to get ExecutorData[%d]\n", pollData->executorDataIndex);
+                log->error("execDatas.get(%d) failed\n", pollData->executorDataIndex);
                 continue;
             }
 
@@ -203,20 +204,8 @@ int PollLoop::createRequestExecutor(int fd, ExecutorType execType)
 }
 
 
-int PollLoop::numberOfPollFds()
-{
-    return numOfPollFds.load();
-}
-
-
 int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
 {
-    if(emptyPollDatas.size() == 0)
-    {
-        log->error("too many connections\n");
-        return -1;
-    }
-
     if(fd != data.fd0 && fd != data.fd1)
     {
         log->error("addPollFd invalid fd argument\n");
@@ -235,14 +224,17 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
         return -1;
     }
 
-    int pollIndex = emptyPollDatas.top();
 
-    PollData *pollData = getPollData(pollIndex);
+    PollData *pollData = pollDatas.allocate();
     if(pollData == nullptr)
     {
-        log->error("getPollData(%d) failed\n", pollIndex);
+        log->error("pollDatas.allocate failed\n");
         return -1;
     }
+    ++numOfPollFds;
+
+    int pollIndex = pollData->index;
+
 
     epoll_event ev;
     ev.events = (events | EPOLLRDHUP | EPOLLERR);
@@ -250,6 +242,8 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
     if(epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
     {
         log->error("epoll_ctl add failed: %s\n", strerror(errno));
+        pollDatas.free(pollIndex);
+        --numOfPollFds;
         return -1;
     }
 
@@ -264,9 +258,6 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
     {
         data.pollIndexFd1 = pollIndex;
     }
-
-    emptyPollDatas.pop();
-    ++numOfPollFds;
 
     return 0;
 }
@@ -291,10 +282,10 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
     }
 
 
-    PollData *pollData = getPollData(pollIndex);
+    PollData *pollData = pollDatas.get(pollIndex);
     if(pollData == nullptr)
     {
-        log->error("getPollData(%d) failed\n", pollIndex);
+        log->error("pollDatas.get(%d) failed\n", pollIndex);
         return -1;
     }
 
@@ -337,22 +328,19 @@ int PollLoop::removePollFd(ExecutorData &data, int fd)
         return -1;
     }
 
+    pollDatas.free(pollIndex);
+    --numOfPollFds;
+
     if(pollIndex == data.pollIndexFd0)
     {
-        emptyPollDatas.push(data.pollIndexFd0);
         data.pollIndexFd0 = -1;
-        --numOfPollFds;
-        return 0;
     }
     else if(pollIndex == data.pollIndexFd1)
     {
-        emptyPollDatas.push(data.pollIndexFd1);
         data.pollIndexFd1 = -1;
-        --numOfPollFds;
-        return 0;
     }
 
-    return -1;
+    return 0;
 }
 
 
@@ -378,13 +366,13 @@ void PollLoop::checkTimeout(long long int curMillis)
 {
     removeExecDatas.erase(removeExecDatas.begin(), removeExecDatas.end());
 
-    for(int i : usedExecDatas)
+    for(int i : execDatas.usedIndexes())
     {
-        ExecutorData *execData = getExecData(i);
+        ExecutorData *execData = execDatas.get(i);
 
         if(execData == nullptr)
         {
-            log->error("can't get execData[%d]\n", i);
+            log->error("execDatas.get(%d) failed\n", i);
         }
         else
         {
@@ -401,7 +389,7 @@ void PollLoop::checkTimeout(long long int curMillis)
         }
     }
 
-    for(ExecutorData *execData : removeExecDatas)
+    for(ExecutorData * execData : removeExecDatas)
     {
         removeExecutorData(execData);
     }
@@ -439,16 +427,9 @@ int PollLoop::createEventFd()
 
 void PollLoop::destroy()
 {
-    if(execDatas != nullptr)
-    {
-        delete[] execDatas;
-        execDatas = nullptr;
-    }
-    if(pollDatas != nullptr)
-    {
-        delete[] pollDatas;
-        pollDatas = nullptr;
-    }
+    execDatas.destroy();
+    pollDatas.destroy();
+
     if(epollFd > 0)
     {
         close(epollFd);
@@ -464,48 +445,14 @@ void PollLoop::destroy()
 
 int PollLoop::initDataStructs()
 {
-    execDataBlocks = 1000;
-    execDataBlockSize = 100;
-
-    pollDataBlocks = 2000;
-    pollDataBlockSize = 100;
-
-    int maxExecutors = execDataBlocks * execDataBlockSize; 
-    int maxEvents = pollDataBlocks * pollDataBlockSize;
-  
-
-    execDatas = new ExecutorData*[execDataBlocks];
-    execDatas[0] = new ExecutorData[execDataBlockSize];
-
-    for(int i = 1; i < execDataBlocks; ++i)
+    if(execDatas.init(1000, 100) != 0)
     {
-        execDatas[i] = nullptr;
+        return -1;
     }
-    for(int i = 0; i < execDataBlockSize; ++i)
+    if(pollDatas.init(1000, 200) != 0)
     {
-        execDatas[0][i].index = i;
+        return -1;
     }
-
-
-    pollDatas = new PollData*[pollDataBlocks];
-    pollDatas[0] = new PollData[pollDataBlockSize];
-
-    for(int i = 1; i < pollDataBlocks; ++i)
-    {
-        pollDatas[i] = nullptr;
-    }
-
-
-
-    for(int i = maxExecutors - 1; i >= 0; --i)
-    {
-        emptyExecDatas.push(i);
-    }
-    for(int i = maxEvents - 1; i >= 0; --i)
-    {
-        emptyPollDatas.push(i);
-    }
-    usedExecDatas.clear();
 
     return 0;
 }
@@ -539,25 +486,15 @@ Executor* PollLoop::getExecutor(ExecutorType execType)
 
 ExecutorData* PollLoop::createExecutorData()
 {
-    if(emptyExecDatas.size() == 0)
-    {
-        log->error("too many connections\n");
-        return nullptr;
-    }
-
-    int execIndex = emptyExecDatas.top();
-    emptyExecDatas.pop();
-    usedExecDatas.insert(execIndex);
-
-    long long int curMillis = getMilliseconds();
-
-    ExecutorData *execData = getExecData(execIndex);
+    ExecutorData *execData = execDatas.allocate();
 
     if(execData == nullptr)
     {
-        log->error("getExecData(%d) failed\n", execIndex);
+        log->error("execDatas.allocate failed\n");
         return nullptr;
     }
+
+    long long int curMillis = getMilliseconds();
 
     execData->createTime = curMillis;
     execData->lastProcessTime = curMillis;
@@ -581,8 +518,7 @@ void PollLoop::removeExecutorData(ExecutorData *execData)
 
     execData->down();
 
-    emptyExecDatas.push(execData->index);
-    usedExecDatas.erase(execData->index);
+    execDatas.free(execData->index);
 }
 
 
@@ -636,52 +572,10 @@ int PollLoop::closeFd(ExecutorData &data, int fd)
 }
 
 
-ExecutorData* PollLoop::getExecData(int index)
+int PollLoop::numberOfPollFds() const
 {
-    int blockIndex = index / execDataBlockSize;
-    int itemIndex = index % execDataBlockSize;
-    
-
-    if(blockIndex >= execDataBlocks || blockIndex < 0)
-    {
-        return nullptr;
-    }
-
-    if(execDatas[blockIndex] == nullptr)
-    {
-        execDatas[blockIndex] = new ExecutorData[execDataBlockSize];
-
-        int indexCounter = blockIndex * execDataBlockSize;
-        int indexLimit = indexCounter + execDataBlockSize;
-
-        for(;indexCounter < indexLimit; ++indexCounter)
-        {
-            execDatas[blockIndex][indexCounter].index = indexCounter;
-        }
-    }
-
-    return &execDatas[blockIndex][itemIndex];
+    return numOfPollFds.load();
 }
-
-
-PollData* PollLoop::getPollData(int index)
-{
-    int blockIndex = index / pollDataBlockSize;
-    int itemIndex = index % pollDataBlockSize;
-
-    if(blockIndex >= pollDataBlocks || blockIndex < 0)
-    {
-        return nullptr;
-    }
-
-    if(pollDatas[blockIndex] == nullptr)
-    {
-        pollDatas[blockIndex] = new PollData[pollDataBlockSize];
-    }
-
-    return &pollDatas[blockIndex][itemIndex];
-}
-
 
 
 void PollLoop::logStats()
@@ -692,9 +586,11 @@ void PollLoop::logStats()
 
     log->info("[%s]<<<<<<<\n", tidBuf);
 
-    for(int execIndex : usedExecDatas)
+    log->info("[%s] poll files: %d\n", tidBuf, static_cast<int>(pollDatas.usedIndexes().size()));
+
+    for(int execIndex : execDatas.usedIndexes())
     {
-        ExecutorData *execData = getExecData(execIndex);
+        ExecutorData *execData = execDatas.get(execIndex);
         if(execData == nullptr)
         {
             log->error("getExecData(%d) failed\n", execIndex);

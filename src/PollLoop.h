@@ -15,11 +15,10 @@
 #include <ProxyExecutorSplice.h>
 
 #include <PollData.h>
+#include <BlockStorage.h>
 
 #include <sys/epoll.h>
 #include <atomic>
-#include <stack>
-#include <set>
 #include <mutex>
 #include <boost/lockfree/spsc_queue.hpp>
 
@@ -46,8 +45,6 @@ public:
 
     int createRequestExecutor(int fd, ExecutorType execType) override;
 
-    int numberOfPollFds();
-
     int addPollFd(ExecutorData &data, int fd, int events) override;
 
     int editPollFd(ExecutorData &data, int fd, int events) override;
@@ -57,6 +54,8 @@ public:
     int closeFd(ExecutorData &data, int fd) override;
 
     int listenPort(int port, ExecutorType execType);
+
+    int numberOfPollFds() const;
 
 protected:
 
@@ -76,9 +75,6 @@ protected:
 
     int createRequestExecutorInternal(int fd, ExecutorType execType);
 
-    ExecutorData* getExecData(int index);
-    PollData* getPollData(int index);
-
     void logStats();
 
 
@@ -95,23 +91,15 @@ protected:
     SslProxyExecutor sslProxyExecutor;
 
 
-    ExecutorData **execDatas = nullptr;
-    PollData **pollDatas = nullptr;
+    BlockStorage<ExecutorData> execDatas;
+    BlockStorage<PollData> pollDatas;
+
 
     static const int MAX_EPOLL_EVENTS = 1000;
     epoll_event events[MAX_EPOLL_EVENTS];
 
-    std::stack<int, std::vector<int>> emptyExecDatas;
-    std::stack<int, std::vector<int>> emptyPollDatas;
-
-    std::set<int> usedExecDatas;
     std::vector<ExecutorData*> removeExecDatas;
 
-    std::atomic_int numOfPollFds;
-
-
-    int execDataBlocks = 0, execDataBlockSize = 0;
-    int pollDataBlocks = 0, pollDataBlockSize = 0;
 
     std::atomic_bool runFlag;
 
@@ -132,6 +120,8 @@ protected:
     int eventFd = -1;
 
     long long int lastCheckTimeoutMillis = 0;
+
+    std::atomic_int numOfPollFds;
 };
 
 #endif
