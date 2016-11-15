@@ -400,7 +400,7 @@ void PollLoop::checkTimeout(long long int curMillis)
 
 int PollLoop::createEventFd()
 {
-    eventFd = eventfd(0, EFD_NONBLOCK | EFD_SEMAPHORE); //check flags !!!
+    eventFd = eventfd(0, EFD_NONBLOCK | EFD_SEMAPHORE);
 
     if(eventFd < 0)
     {
