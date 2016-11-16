@@ -28,6 +28,8 @@ public:
         this->maxBlocks = maxBlocks;
         this->blockSize = blockSize;
 
+        nextBlock = 0;
+
         data = new T*[maxBlocks];
 
         for(int i = 0; i < maxBlocks; ++i)
@@ -61,6 +63,10 @@ public:
 
         empty.clear();
         used.clear();
+
+        nextBlock = 0;
+        maxBlocks = 0;
+        blockSize = 0;
     }
 
 
@@ -117,6 +123,26 @@ public:
         return used;
     }
 
+
+    struct StorageInfo
+    {
+        int maxBlocks = 0;
+        int blockSize = 0;
+        int allocatedBlocks = 0;
+        int usedItems = 0;
+        int emptyItems = 0;
+    };
+
+    int getStorageInfo(StorageInfo &si) const
+    {
+        si.maxBlocks = maxBlocks;
+        si.blockSize = blockSize;
+        si.allocatedBlocks = nextBlock;
+        si.usedItems = static_cast<int>(used.size());
+        si.emptyItems = static_cast<int>(empty.size());
+
+        return 0;
+    }
 
 protected:
 

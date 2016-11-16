@@ -586,7 +586,19 @@ void PollLoop::logStats()
 
     log->info("[%s]<<<<<<<\n", tidBuf);
 
-    log->info("[%s] poll files: %d\n", tidBuf, static_cast<int>(pollDatas.usedIndexes().size()));
+    BlockStorage<ExecutorData>::StorageInfo siExec;
+    if(execDatas.getStorageInfo(siExec) == 0)
+    {
+        log->info("[%s] executors. blocks: %d   used: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
+                  tidBuf, siExec.allocatedBlocks, siExec.usedItems, siExec.emptyItems, siExec.blockSize, siExec.maxBlocks);
+    }
+
+    BlockStorage<PollData>::StorageInfo siPoll;
+    if(pollDatas.getStorageInfo(siPoll) == 0)
+    {
+        log->info("[%s] poll data. blocks: %d   used: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
+                  tidBuf, siPoll.allocatedBlocks, siPoll.usedItems, siPoll.emptyItems, siPoll.blockSize, siPoll.maxBlocks);
+    }
 
     for(int execIndex : execDatas.usedIndexes())
     {
