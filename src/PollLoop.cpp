@@ -212,7 +212,7 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
         return -1;
     }
 
-    if(fd == data.fd0 && data.pollData0 != nullptr )
+    if(fd == data.fd0 && data.pollData0 != nullptr)
     {
         log->error("addPollFd: pollData0 != nullptr\n");
         return -1;
@@ -317,6 +317,7 @@ int PollLoop::removePollFd(ExecutorData &data, int fd)
         return -1;
     }
 
+    pollData->down();
     pollDatas.free(pollData);
     --numOfPollFds;
 
@@ -606,7 +607,7 @@ void PollLoop::logStats()
         else
         {
             execData->writeLog(log, Log::Level::info, tidBuf);
-        }      
+        }
     }
 
     log->info("%s>>>>>>>\n", tidBuf);

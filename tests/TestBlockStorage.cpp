@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <chrono>
 
-struct Data {
+struct Data
+{
     int intValue1, intValue2;
     char buf[200];
     BlockStorage<Data>::ServiceData bsData;
@@ -14,13 +15,14 @@ struct Data {
 inline long long int getMilliseconds()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-        ).count();
+               std::chrono::system_clock::now().time_since_epoch()
+           ).count();
 }
 
 //====================================================================
 
-class AllocateFunctor {
+class AllocateFunctor
+{
 public:
     AllocateFunctor(BlockStorage<Data> *storage): storage(storage) { }
 
@@ -33,7 +35,8 @@ private:
     BlockStorage<Data> *storage = nullptr;
 };
 
-class FreeFunctor {
+class FreeFunctor
+{
 public:
     FreeFunctor(BlockStorage<Data> *storage): storage(storage) { }
 
@@ -48,12 +51,35 @@ private:
 
 //====================================================================
 
+void checkStorageEmpty(BlockStorage<Data> &storage)
+{
+    BlockStorage<Data>::StorageInfo si;
+    if(storage.getStorageInfo(si) == 0)
+    {
+        printf("executors. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
+               si.allocatedBlocks, si.emptyItems, si.blockSize, si.maxBlocks);
+    }
+    else
+    {
+        printf("getStorageInfo failed!\n");
+        exit(-1);
+    }
+
+    if(si.allocatedBlocks * si.blockSize != si.emptyItems)
+    {
+        printf("storage is not empty!\n");
+        exit(-1);
+    }
+}
+
+//====================================================================
+
 template<typename Allocate, typename Free>
 void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const int blockSize)
 {
-    std::vector<Data*> pointers; 
+    std::vector<Data*> pointers;
     pointers.reserve(totalItems);
-    
+
     for(int i = 0; i < totalItems; ++i)
     {
         Data *ptr = (Data*)allocFun(sizeof(Data));
@@ -73,29 +99,30 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const in
         for(int start = 0; start < testBlock; ++start)
         {
             for(int ind = start; ind < totalItems; ind += testBlock)
-            {        
+            {
                 freeFun(pointers[ind]);
             }
             for(int ind = start; ind < totalItems; ind += testBlock)
-            {      
+            {
                 Data *ptr = (Data*)allocFun(sizeof(Data));
                 if(ptr == nullptr)
                 {
                     printf("allocation failed!\n");
                     exit(-1);
-                }                
+                }
                 pointers[ind] = ptr;
             }
         }
     }
 
-    for(Data *p : pointers)
+    for(Data * p : pointers)
     {
         freeFun(p);
     }
 }
 
-void testStorage1()
+
+void testWithMalloc()
 {
     const int totalItems = 10000000;
     const int blockSize = 100;
@@ -115,7 +142,7 @@ void testStorage1()
         millis = getMilliseconds() - millis;
         printf("block storage: %lld\n", millis);
     }
-  
+
     {
         millis = getMilliseconds();
 
@@ -124,21 +151,27 @@ void testStorage1()
         millis = getMilliseconds() - millis;
         printf("malloc: %lld\n", millis);
     }
+
+    checkStorageEmpty(storage);
 }
 
 //====================================================================
 
-void testStorage2()
+void testIteration()
 {
-    BlockStorage<Data> storage2;
-    std::vector<Data*> pointers;  
+    const int totalItems = 100000;
+    const int blockSize = 10;
+    const int testItems = 30;
 
-    storage2.init(1000, 10);
-    pointers.reserve(1000 * 10);
+    BlockStorage<Data> storage;
+    std::vector<Data*> pointers;
 
-    for(int i = 0; i < 30; ++i)
+    storage.init(totalItems / blockSize, blockSize);
+    pointers.reserve(totalItems);
+
+    for(int i = 0; i < testItems; ++i)
     {
-        Data *ptr = storage2.allocate();
+        Data *ptr = storage.allocate();
         if(ptr == nullptr)
         {
             printf("allocation failed!\n");
@@ -148,47 +181,76 @@ void testStorage2()
         pointers.push_back(ptr);
     }
 
-    for(int i = 0; i < 30; ++i)
-    {
-        if(i % 3 != 0 || (i>=15 && i<=20))
-        {
-            storage2.free(pointers[i]);
-            pointers[i] = nullptr;
-        }
-    }
-
-    BlockStorage<Data>::Iterator iter = storage2.begin();
-    BlockStorage<Data>::Iterator end = storage2.end();
-
+    BlockStorage<Data>::Iterator iter = storage.begin();
+    BlockStorage<Data>::Iterator end = storage.end();
+    int counter = 0;
 
     for(; iter != end; ++iter)
     {
-        printf("value: %d\n", iter->intValue1);
+        if(iter->intValue1 != counter)
+        {
+            printf("%d != %d\n", iter->intValue1, counter);
+            exit(-1);
+        }
+        ++counter;
+    }
+
+    std::set<int> storageValues;
+
+    for(int i = 0; i < testItems; ++i)
+    {
+        if(i % 3 != 0 || (i >= 15 && i <= 20))
+        {
+            storage.free(pointers[i]);
+            pointers[i] = nullptr;
+        }
+        else
+        {
+            storageValues.insert(pointers[i]->intValue1);
+        }
+    }
+
+    for(iter = storage.begin(); iter != end; ++iter)
+    {
+        if(storageValues.count(iter->intValue1) != 1)
+        {
+            printf("value %d not found!\n", iter->intValue1);
+            exit(-1);
+        }
+        else
+        {
+            storageValues.erase(iter->intValue1);
+            printf("value: %d\n", iter->intValue1);
+        }
     }
 
     printf("-----\n");
 
-    for(auto &data : storage2)
+    for(auto & data : storage)
     {
         printf("value: %d\n", data.intValue1);
     }
 
 
-    for(Data *p : pointers)
+    for(Data * p : pointers)
     {
         if(p != nullptr)
         {
-            storage2.free(p);
+            storage.free(p);
         }
     }
+
+    checkStorageEmpty(storage);
 }
 
 //====================================================================
 
 int main()
 {
-    testStorage1();
-    testStorage2();
+    testWithMalloc();
+    testIteration();
+
+    printf("\n============\nall tests ok\n");
 
     return 0;
 }

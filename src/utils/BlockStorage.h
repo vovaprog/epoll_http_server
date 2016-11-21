@@ -8,7 +8,7 @@ template<class T>
 class BlockStorage
 {
 public:
- 
+
     BlockStorage() = default;
 
     BlockStorage(const BlockStorage &bs) = delete;
@@ -23,11 +23,12 @@ public:
     }
 
 
-    struct ServiceData {
+    struct ServiceData
+    {
         int index = -1;
         bool used = false;
     };
- 
+
 
     int init(int maxBlocks, int blockSize)
     {
@@ -82,14 +83,14 @@ public:
             {
                 return nullptr;
             }
-       }
+        }
 
         int index = empty.back();
         empty.pop_back();
 
         int blockIndex = index / blockSize;
         int itemIndex = index % blockSize;
-           
+
         T *ptr = &data[blockIndex][itemIndex];
         ptr->bsData.used = true;
 
@@ -123,19 +124,20 @@ public:
         return 0;
     }
 
-    
+
 public:
 
     //===================== Iterator ====================
 
-    class Iterator {
+    class Iterator
+    {
     public:
         Iterator(): ptr(nullptr) { }
 
         Iterator(const BlockStorage<T> *storage):
             storage(storage)
         {
-            findUsed(); 
+            findUsed();
         }
 
 
@@ -156,7 +158,7 @@ public:
         {
             return ptr;
         }
-        
+
 
         T* pointer() const
         {
@@ -168,7 +170,7 @@ public:
         {
             return iter.ptr != ptr;
         }
-        
+
 
     private:
 
@@ -176,7 +178,7 @@ public:
         {
             while(blockIndex < storage->nextBlock)
             {
-                for(;itemIndex < storage->blockSize; ++itemIndex)
+                for(; itemIndex < storage->blockSize; ++itemIndex)
                 {
                     if(storage->data[blockIndex][itemIndex].bsData.used)
                     {
@@ -186,7 +188,7 @@ public:
                 }
 
                 ++blockIndex;
-                itemIndex = 0;             
+                itemIndex = 0;
 
                 if(blockIndex >= storage->nextBlock)
                 {
@@ -194,7 +196,7 @@ public:
                     break;
                 }
             }
-               
+
             return *this;
         }
 
@@ -209,7 +211,7 @@ public:
 
     //===================== Iterator ====================
 
-   
+
     Iterator begin() const
     {
         Iterator iter(this);

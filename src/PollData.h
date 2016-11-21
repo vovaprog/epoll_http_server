@@ -10,6 +10,12 @@ struct PollData
     int fd = -1;
     ExecutorData *execData = nullptr;
 
+    void down()
+    {
+        fd = -1;
+        execData = nullptr;
+    }
+
     BlockStorage<PollData>::ServiceData bsData;
 };
 
