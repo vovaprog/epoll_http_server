@@ -10,12 +10,6 @@ struct Data {
     BlockStorage<Data>::ServiceData bsData;
 };
 
-const int totalItems = 10000000;
-const int blockSize = 100;
-
-BlockStorage<Data> storage;
-std::vector<Data*> pointers;
-
 
 inline long long int getMilliseconds()
 {
@@ -24,20 +18,42 @@ inline long long int getMilliseconds()
         ).count();
 }
 
+//====================================================================
 
-Data* blockStorageAllocate(int size)
-{
-    return storage.allocate();
-}
+class AllocateFunctor {
+public:
+    AllocateFunctor(BlockStorage<Data> *storage): storage(storage) { }
 
-void blockStorageFree(Data *data)
-{
-    storage.free(data);
-}
+    Data* operator()(int size)
+    {
+        return storage->allocate();
+    }
+
+private:
+    BlockStorage<Data> *storage = nullptr;
+};
+
+class FreeFunctor {
+public:
+    FreeFunctor(BlockStorage<Data> *storage): storage(storage) { }
+
+    void operator()(Data *data)
+    {
+        storage->free(data);
+    }
+
+private:
+    BlockStorage<Data> *storage = nullptr;
+};
+
+//====================================================================
 
 template<typename Allocate, typename Free>
-void testStorage(Allocate allocFun, Free freeFun)
+void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const int blockSize)
 {
+    std::vector<Data*> pointers; 
+    pointers.reserve(totalItems);
+    
     for(int i = 0; i < totalItems; ++i)
     {
         Data *ptr = (Data*)allocFun(sizeof(Data));
@@ -79,33 +95,100 @@ void testStorage(Allocate allocFun, Free freeFun)
     }
 }
 
-
-int main()
+void testStorage1()
 {
+    const int totalItems = 10000000;
+    const int blockSize = 100;
+
+    BlockStorage<Data> storage;
+    std::vector<Data*> pointers;
+
     storage.init(totalItems / blockSize, blockSize);
-    pointers.reserve(totalItems);
 
     long long int millis;
 
-     {
+    {
         millis = getMilliseconds();
 
-        testStorage(blockStorageAllocate, blockStorageFree);
+        testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
 
         millis = getMilliseconds() - millis;
         printf("block storage: %lld\n", millis);
     }
   
-    pointers.erase(pointers.begin(), pointers.end());
- 
     {
         millis = getMilliseconds();
 
-        testStorage(malloc, free);
+        testStorage(malloc, free, totalItems, blockSize);
 
         millis = getMilliseconds() - millis;
         printf("malloc: %lld\n", millis);
-   }
+    }
+}
+
+//====================================================================
+
+void testStorage2()
+{
+    BlockStorage<Data> storage2;
+    std::vector<Data*> pointers;  
+
+    storage2.init(1000, 10);
+    pointers.reserve(1000 * 10);
+
+    for(int i = 0; i < 30; ++i)
+    {
+        Data *ptr = storage2.allocate();
+        if(ptr == nullptr)
+        {
+            printf("allocation failed!\n");
+            exit(-1);
+        }
+        ptr->intValue1 = i;
+        pointers.push_back(ptr);
+    }
+
+    for(int i = 0; i < 30; ++i)
+    {
+        if(i % 3 != 0 || (i>=15 && i<=20))
+        {
+            storage2.free(pointers[i]);
+            pointers[i] = nullptr;
+        }
+    }
+
+    BlockStorage<Data>::Iterator iter = storage2.begin();
+    BlockStorage<Data>::Iterator end = storage2.end();
+
+
+    for(; iter != end; ++iter)
+    {
+        printf("value: %d\n", iter->intValue1);
+    }
+
+    printf("-----\n");
+
+    for(auto &data : storage2)
+    {
+        printf("value: %d\n", data.intValue1);
+    }
+
+
+    for(Data *p : pointers)
+    {
+        if(p != nullptr)
+        {
+            storage2.free(p);
+        }
+    }
+}
+
+//====================================================================
+
+int main()
+{
+    testStorage1();
+    testStorage2();
 
     return 0;
 }

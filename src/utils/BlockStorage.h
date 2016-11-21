@@ -126,17 +126,44 @@ public:
     
 public:
 
-    //================ Iterator ===============
+    //===================== Iterator ====================
 
     class Iterator {
     public:
         Iterator(): ptr(nullptr) { }
 
-        Iterator(BlockStorage<T> *storage):
+        Iterator(const BlockStorage<T> *storage):
             storage(storage)
         {
             findUsed(); 
         }
+
+
+        Iterator& operator++()
+        {
+            ++itemIndex;
+            return findUsed();
+        }
+
+
+        T& operator*() const
+        {
+            return *ptr;
+        }
+
+
+        T* operator->() const
+        {
+            return ptr;
+        }
+        
+        bool operator!=(const Iterator &iter) const
+        {
+            return iter.ptr != ptr;
+        }
+
+
+    private:
 
         Iterator& findUsed()
         {
@@ -144,14 +171,15 @@ public:
             {
                 for(;itemIndex < storage->blockSize; ++itemIndex)
                 {
-                    if(storage->data[blockIndex][itemIndex].used)
+                    if(storage->data[blockIndex][itemIndex].bsData.used)
                     {
                         ptr = &(storage->data[blockIndex][itemIndex]);
                         return *this;
                     }
                 }
-                itemIndex = 0;
+
                 ++blockIndex;
+                itemIndex = 0;             
 
                 if(blockIndex >= storage->nextBlock)
                 {
@@ -163,43 +191,26 @@ public:
             return *this;
         }
 
-        Iterator& operator++()
-        {
-            ++itemIndex;
-            return findUsed;
-        }
-
-
-        T& operator*() const
-        {
-            return *ptr;
-        }
-
-        
-        bool operator==(const Iterator &iter) const
-        {
-            return iter.ptr == ptr;
-        }
 
     private:
+
         T *ptr = nullptr;
-        BlockStorage<T> *storage = nullptr;
+        const BlockStorage<T> *storage = nullptr;
         int blockIndex = 0;
         int itemIndex = 0;
     };
 
-    //================ Iterator ===============
+    //===================== Iterator ====================
 
    
-    Iterator& begin() const
+    Iterator begin() const
     {
         Iterator iter(this);
-        iter.findFirstUsed();
         return iter;
     }
 
 
-    Iterator& end() const
+    Iterator end() const
     {
         return Iterator();
     }
@@ -215,14 +226,14 @@ protected:
         }
         data[nextBlock] = new T[blockSize];
 
-        int index = nextBlock * blockSize;
+        int index = nextBlock * blockSize + blockSize - 1;
 
-        for(int i = 0; i < blockSize; ++i)
+        for(int i = blockSize - 1; i >= 0; --i)
         {
             data[nextBlock][i].bsData.index = index;
             data[nextBlock][i].bsData.used = false;
             empty.push_back(index);
-            ++index;
+            --index;
         }
 
         ++nextBlock;
