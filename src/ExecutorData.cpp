@@ -23,8 +23,8 @@ void ExecutorData::down()
         close(fd1);
         fd1 = -1;
     }
-    pollIndexFd0 = -1;
-    pollIndexFd1 = -1;
+    pollData0 = nullptr;
+    pollData1 = nullptr;
 
     if(pipeReadFd > 0)
     {

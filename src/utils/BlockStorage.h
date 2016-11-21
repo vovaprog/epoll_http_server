@@ -157,11 +157,18 @@ public:
             return ptr;
         }
         
+
+        T* pointer() const
+        {
+            return ptr;
+        }
+
+
         bool operator!=(const Iterator &iter) const
         {
             return iter.ptr != ptr;
         }
-
+        
 
     private:
 

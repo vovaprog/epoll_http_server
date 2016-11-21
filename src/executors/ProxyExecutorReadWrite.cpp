@@ -163,7 +163,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseRead(ExecutorData &
     }
     else // no place in buffer
     {
-        if(data.pollIndexFd1 >= 0)
+        if(data.pollData1 != nullptr)
         {
             if(loop->removePollFd(data, data.fd1) != 0)
             {
@@ -171,7 +171,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseRead(ExecutorData &
             }
         }
 
-        if(data.pollIndexFd0 < 0)
+        if(data.pollData0 == nullptr)
         {
             if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
             {
@@ -201,7 +201,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseWrite(ExecutorData 
         {
             if(errorCode == EAGAIN || errorCode == EWOULDBLOCK)
             {
-                if(data.pollIndexFd0 < 0)
+                if(data.pollData0 == nullptr)
                 {
                     if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
                     {
@@ -228,7 +228,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseWrite(ExecutorData 
                 return ProcessResult::removeExecutorOk;
             }
 
-            if(data.pollIndexFd1 < 0 && data.state == ExecutorData::State::forwardResponse)
+            if(data.pollData1 == nullptr && data.state == ExecutorData::State::forwardResponse)
             {
                 if(loop->addPollFd(data, data.fd1, EPOLLIN) != 0)
                 {
@@ -246,7 +246,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseWrite(ExecutorData 
             return ProcessResult::removeExecutorOk;
         }
 
-        if(data.pollIndexFd0 >= 0)
+        if(data.pollData0 != nullptr)
         {
             if(loop->removePollFd(data, data.fd0) != 0)
             {

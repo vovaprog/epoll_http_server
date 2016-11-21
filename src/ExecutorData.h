@@ -5,12 +5,14 @@
 #include <ConnectionType.h>
 #include <Log.h>
 #include <HttpRequest.h>
+#include <BlockStorage.h>
 
 #include <sys/types.h>
 #include <openssl/ssl.h>
 
 class Executor;
 struct ProxyParameters;
+struct PollData;
 
 struct ExecutorData
 {
@@ -33,16 +35,14 @@ struct ExecutorData
         sslHandshake, waitConnect, sendOnlyHeaders, ok
     };
 
-    int index = -1;
-
     Executor *pExecutor = nullptr;
 
     State state = State::invalid;
 
     int fd0 = -1;
     int fd1 = -1;
-    int pollIndexFd0 = -1;
-    int pollIndexFd1 = -1;
+    PollData *pollData0 = nullptr;
+    PollData *pollData1 = nullptr;
 
     int pipeReadFd = -1;
     int pipeWriteFd = -1;
@@ -71,6 +71,8 @@ struct ExecutorData
     HttpRequest request;
 
     ProxyParameters *proxy = nullptr;
+
+    BlockStorage<ExecutorData>::ServiceData bsData;
 };
 
 #endif

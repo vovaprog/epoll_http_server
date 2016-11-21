@@ -85,11 +85,11 @@ int PollLoop::run()
         for(int i = 0; i < nEvents; ++i)
         {
             PollData *pollData = static_cast<PollData*>(events[i].data.ptr);
-            ExecutorData *execData = execDatas.get(pollData->executorDataIndex);
+            ExecutorData *execData = pollData->execData;
 
             if(execData == nullptr)
             {
-                log->error("execDatas.get(%d) failed\n", pollData->executorDataIndex);
+                log->error("execData is null!\n");
                 continue;
             }
 
@@ -212,15 +212,15 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
         return -1;
     }
 
-    if(fd == data.fd0 && data.pollIndexFd0 >= 0)
+    if(fd == data.fd0 && data.pollData0 != nullptr )
     {
-        log->error("addPollFd: pollIndexFd0 >= 0\n");
+        log->error("addPollFd: pollData0 != nullptr\n");
         return -1;
     }
 
-    if(fd == data.fd1 && data.pollIndexFd1 >= 0)
+    if(fd == data.fd1 && data.pollData1 != nullptr)
     {
-        log->error("addPollFd: pollIndexFd1 >= 0\n");
+        log->error("addPollFd: pollData1 != nullptr\n");
         return -1;
     }
 
@@ -233,8 +233,6 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
     }
     ++numOfPollFds;
 
-    int pollIndex = pollData->index;
-
 
     epoll_event ev;
     ev.events = (events | EPOLLRDHUP | EPOLLERR);
@@ -242,21 +240,21 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
     if(epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
     {
         log->error("epoll_ctl add failed: %s\n", strerror(errno));
-        pollDatas.free(pollIndex);
+        pollDatas.free(pollData);
         --numOfPollFds;
         return -1;
     }
 
     pollData->fd = fd;
-    pollData->executorDataIndex = data.index;
+    pollData->execData = &data;
 
     if(fd == data.fd0)
     {
-        data.pollIndexFd0 = pollIndex;
+        data.pollData0 = pollData;
     }
     else if(fd == data.fd1)
     {
-        data.pollIndexFd1 = pollIndex;
+        data.pollData1 = pollData;
     }
 
     return 0;
@@ -265,30 +263,21 @@ int PollLoop::addPollFd(ExecutorData &data, int fd, int events)
 
 int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
 {
-    int pollIndex = -1;
+    PollData *pollData = nullptr;
     if(fd == data.fd0)
     {
-        pollIndex = data.pollIndexFd0;
+        pollData = data.pollData0;
     }
     else if(fd == data.fd1)
     {
-        pollIndex = data.pollIndexFd1;
+        pollData = data.pollData1;
     }
 
-    if(pollIndex < 0)
-    {
-        log->error("editPollFd: pollIndex < 0\n");
-        return -1;
-    }
-
-
-    PollData *pollData = pollDatas.get(pollIndex);
     if(pollData == nullptr)
     {
-        log->error("pollDatas.get(%d) failed\n", pollIndex);
+        log->error("editPollFd: pollData is null\n");
         return -1;
     }
-
 
     epoll_event ev;
     ev.events = (events | EPOLLRDHUP | EPOLLERR);
@@ -305,18 +294,18 @@ int PollLoop::editPollFd(ExecutorData &data, int fd, int events)
 
 int PollLoop::removePollFd(ExecutorData &data, int fd)
 {
-    int pollIndex = -1;
+    PollData *pollData = nullptr;
 
     if(fd == data.fd0)
     {
-        pollIndex = data.pollIndexFd0;
+        pollData = data.pollData0;
     }
     else if(fd == data.fd1)
     {
-        pollIndex = data.pollIndexFd1;
+        pollData = data.pollData1;
     }
 
-    if(pollIndex < 0)
+    if(pollData == nullptr)
     {
         data.writeLog(log, Log::Level::error, "removePollFd called with invalid fd");
         return -1;
@@ -328,16 +317,16 @@ int PollLoop::removePollFd(ExecutorData &data, int fd)
         return -1;
     }
 
-    pollDatas.free(pollIndex);
+    pollDatas.free(pollData);
     --numOfPollFds;
 
-    if(pollIndex == data.pollIndexFd0)
+    if(pollData == data.pollData0)
     {
-        data.pollIndexFd0 = -1;
+        data.pollData0 = nullptr;
     }
-    else if(pollIndex == data.pollIndexFd1)
+    else if(pollData == data.pollData1)
     {
-        data.pollIndexFd1 = -1;
+        data.pollData1 = nullptr;
     }
 
     return 0;
@@ -366,13 +355,16 @@ void PollLoop::checkTimeout(long long int curMillis)
 {
     removeExecDatas.erase(removeExecDatas.begin(), removeExecDatas.end());
 
-    for(int i : execDatas.usedIndexes())
+    BlockStorage<ExecutorData>::Iterator iter = execDatas.begin();
+    BlockStorage<ExecutorData>::Iterator end = execDatas.end();
+
+    for(; iter != end ; ++iter)
     {
-        ExecutorData *execData = execDatas.get(i);
+        ExecutorData *execData = iter.pointer();
 
         if(execData == nullptr)
         {
-            log->error("execDatas.get(%d) failed\n", i);
+            log->error("checkTimeout - executor data is null\n");
         }
         else
         {
@@ -381,7 +373,6 @@ void PollLoop::checkTimeout(long long int curMillis)
                 if((curMillis - execData->lastProcessTime > parameters->executorTimeoutMillis) ||
                         (curMillis - execData->createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
                 {
-                    //can't remove here, because removeExecutorData modifies usedExecDatas
                     removeExecDatas.push_back(execData);
                     execData->writeLog(log, Log::Level::debug, "timeout remove executor");
                 }
@@ -507,18 +498,18 @@ void PollLoop::removeExecutorData(ExecutorData *execData)
 {
     execData->writeLog(log, Log::Level::debug, "remove executor");
 
-    if(execData->pollIndexFd0 >= 0)
+    if(execData->pollData0 != nullptr)
     {
         removePollFd(*execData, execData->fd0);
     }
-    if(execData->pollIndexFd1 >= 0)
+    if(execData->pollData1 != nullptr)
     {
         removePollFd(*execData, execData->fd1);
     }
 
     execData->down();
 
-    execDatas.free(execData->index);
+    execDatas.free(execData);
 }
 
 
@@ -548,7 +539,7 @@ int PollLoop::closeFd(ExecutorData &data, int fd)
 {
     if(fd == data.fd0)
     {
-        if(data.pollIndexFd0 >= 0)
+        if(data.pollData0 != nullptr)
         {
             removePollFd(data, data.fd0);
         }
@@ -558,7 +549,7 @@ int PollLoop::closeFd(ExecutorData &data, int fd)
     }
     else if(fd == data.fd1)
     {
-        if(data.pollIndexFd1 >= 0)
+        if(data.pollData1 != nullptr)
         {
             removePollFd(data, data.fd1);
         }
@@ -582,37 +573,42 @@ void PollLoop::logStats()
 {
     unsigned long long int tid = pthread_self();
     char tidBuf[30];
-    snprintf(tidBuf, 30, "%llu", tid);
+    snprintf(tidBuf, 30, "[%llu]", tid);
 
-    log->info("[%s]<<<<<<<\n", tidBuf);
+    log->info("%s<<<<<<<\n", tidBuf);
 
     BlockStorage<ExecutorData>::StorageInfo siExec;
     if(execDatas.getStorageInfo(siExec) == 0)
     {
-        log->info("[%s] executors. blocks: %d   used: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
-                  tidBuf, siExec.allocatedBlocks, siExec.usedItems, siExec.emptyItems, siExec.blockSize, siExec.maxBlocks);
+        log->info("%s   executors. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
+                  tidBuf, siExec.allocatedBlocks, siExec.emptyItems, siExec.blockSize, siExec.maxBlocks);
     }
 
     BlockStorage<PollData>::StorageInfo siPoll;
     if(pollDatas.getStorageInfo(siPoll) == 0)
     {
-        log->info("[%s] poll data. blocks: %d   used: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
-                  tidBuf, siPoll.allocatedBlocks, siPoll.usedItems, siPoll.emptyItems, siPoll.blockSize, siPoll.maxBlocks);
+        log->info("%s   poll data. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
+                  tidBuf, siPoll.allocatedBlocks, siPoll.emptyItems, siPoll.blockSize, siPoll.maxBlocks);
     }
 
-    for(int execIndex : execDatas.usedIndexes())
+
+    BlockStorage<ExecutorData>::Iterator iter = execDatas.begin();
+    BlockStorage<ExecutorData>::Iterator end = execDatas.end();
+
+    for(; iter != end ; ++iter)
     {
-        ExecutorData *execData = execDatas.get(execIndex);
+        ExecutorData *execData = iter.pointer();
+
         if(execData == nullptr)
         {
-            log->error("getExecData(%d) failed\n", execIndex);
+            log->error("logStats - exec data is null\n");
         }
         else
         {
             execData->writeLog(log, Log::Level::info, tidBuf);
-        }
+        }      
     }
 
-    log->info("[%s]>>>>>>>\n", tidBuf);
+    log->info("%s>>>>>>>\n", tidBuf);
 }
 

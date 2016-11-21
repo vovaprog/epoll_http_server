@@ -172,7 +172,7 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseRead(ExecutorData &dat
         {
             ++data.retryCounter;
 
-            if(data.bytesInPipe > 0 && data.pollIndexFd1 >= 0)
+            if(data.bytesInPipe > 0 && data.pollData1 != nullptr)
             {
                 if(loop->removePollFd(data, data.fd1) != 0)
                 {
@@ -221,7 +221,7 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &da
             {
                 ++data.retryCounter;
 
-                if(data.pollIndexFd0 < 0)
+                if(data.pollData0 == nullptr)
                 {
                     if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
                     {
@@ -259,7 +259,7 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &da
 
                 if(data.bytesInPipe > 0)
                 {
-                    if(data.pollIndexFd0 < 0)
+                    if(data.pollData0 == nullptr)
                     {
                         if(loop->addPollFd(data, data.fd0, EPOLLOUT) != 0)
                         {
@@ -269,14 +269,14 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &da
                 }
                 else if(data.bytesInPipe == 0)
                 {
-                    if(data.pollIndexFd0 >= 0)
+                    if(data.pollData0 != nullptr)
                     {
                         if(loop->removePollFd(data, data.fd0) != 0)
                         {
                             return ProcessResult::removeExecutorError;
                         }
                     }
-                    if(data.pollIndexFd1 < 0)
+                    if(data.pollData1 == nullptr)
                     {
                         if(loop->addPollFd(data, data.fd1, EPOLLIN) != 0)
                         {
