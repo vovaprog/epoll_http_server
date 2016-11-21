@@ -53,7 +53,7 @@ public:
     {
         if(data != nullptr)
         {
-            for(int i = 0; i < maxBlocks; ++i)
+            for(int i = 0; i < nextBlock; ++i)
             {
                 if(data[i] != nullptr)
                 {
@@ -82,21 +82,24 @@ public:
             {
                 return nullptr;
             }
-            if(empty.size() <= 0)
-            {
-                return nullptr;
-            }
-        }
+       }
 
         int index = empty.back();
         empty.pop_back();
 
-        return get(index);
+        int blockIndex = index / blockSize;
+        int itemIndex = index % blockSize;
+           
+        T *ptr = &data[blockIndex][itemIndex];
+        ptr->bsData.used = true;
+
+        return ptr;
     }
 
 
     int free(T *item)
     {
+        item->bsData.used = false;
         empty.push_back(item->bsData.index);
         return 0;
     }
@@ -118,6 +121,87 @@ public:
         si.emptyItems = static_cast<int>(empty.size());
 
         return 0;
+    }
+
+    
+public:
+
+    //================ Iterator ===============
+
+    class Iterator {
+    public:
+        Iterator(): ptr(nullptr) { }
+
+        Iterator(BlockStorage<T> *storage):
+            storage(storage)
+        {
+            findUsed(); 
+        }
+
+        Iterator& findUsed()
+        {
+            while(blockIndex < storage->nextBlock)
+            {
+                for(;itemIndex < storage->blockSize; ++itemIndex)
+                {
+                    if(storage->data[blockIndex][itemIndex].used)
+                    {
+                        ptr = &(storage->data[blockIndex][itemIndex]);
+                        return *this;
+                    }
+                }
+                itemIndex = 0;
+                ++blockIndex;
+
+                if(blockIndex >= storage->nextBlock)
+                {
+                    ptr = nullptr;
+                    break;
+                }
+            }
+               
+            return *this;
+        }
+
+        Iterator& operator++()
+        {
+            ++itemIndex;
+            return findUsed;
+        }
+
+
+        T& operator*() const
+        {
+            return *ptr;
+        }
+
+        
+        bool operator==(const Iterator &iter) const
+        {
+            return iter.ptr == ptr;
+        }
+
+    private:
+        T *ptr = nullptr;
+        BlockStorage<T> *storage = nullptr;
+        int blockIndex = 0;
+        int itemIndex = 0;
+    };
+
+    //================ Iterator ===============
+
+   
+    Iterator& begin() const
+    {
+        Iterator iter(this);
+        iter.findFirstUsed();
+        return iter;
+    }
+
+
+    Iterator& end() const
+    {
+        return Iterator();
     }
 
 
@@ -147,24 +231,6 @@ protected:
     }
 
 
-    T* get(int index) const
-    {
-        int blockIndex = index / blockSize;
-        int itemIndex = index % blockSize;
-
-        if(blockIndex >= maxBlocks || blockIndex < 0)
-        {
-            return nullptr;
-        }
-        if(data[blockIndex] == nullptr)
-        {
-            return nullptr;
-        }
-
-        return &data[blockIndex][itemIndex];
-    }
-
-   
 protected:
 
     T **data = nullptr;
@@ -174,6 +240,7 @@ protected:
 
     std::vector<int> empty;
 };
+
 
 #endif
 

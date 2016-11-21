@@ -5,7 +5,7 @@
 #include <chrono>
 
 struct Data {
-    int index;
+    int intValue1, intValue2;
     char buf[200];
     BlockStorage<Data>::ServiceData bsData;
 };
