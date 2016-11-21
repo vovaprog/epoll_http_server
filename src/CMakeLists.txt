@@ -52,11 +52,11 @@ set(SOURCE
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror -pedantic-errors -pthread")
 
-add_executable(epoll_http_server ${SOURCE})
+#add_executable(epoll_http_server ${SOURCE})
 
-target_link_libraries(epoll_http_server ssl crypto tinyxml2)
+#target_link_libraries(epoll_http_server ssl crypto tinyxml2)
 
-add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp)
+#add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp)
 add_executable(test_block_storage ../tests/TestBlockStorage.cpp utils/BlockStorage.h)
 
 
