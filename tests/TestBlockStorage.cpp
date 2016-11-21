@@ -91,7 +91,7 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const in
         pointers.push_back(ptr);
     }
 
-    const int numberOfIters = 1;
+    const int numberOfIters = 5;
     const int testBlock = 10;
 
     for(int q = 0; q < numberOfIters; ++q)
@@ -124,7 +124,7 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const in
 
 void testWithMalloc()
 {
-    const int totalItems = 10000000;
+    const int totalItems = 1000000;
     const int blockSize = 100;
 
     BlockStorage<Data> storage;
