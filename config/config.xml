@@ -1,5 +1,4 @@
 <httpServerConfig>
-    <maxClients>1000</maxClients>
     <rootFolder>./data</rootFolder>
     <logLevel>info</logLevel>                              <!-- values: debug, info, warning, error -->
     <logType>stdout</logType>                              <!-- values: stdout, mmap -->

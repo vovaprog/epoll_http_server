@@ -1,0 +1,19 @@
+# systemd unit file for epoll_http_server
+# edit this file and put to /etc/systemd/system folder
+
+[Unit]
+Description=epoll_http_server
+Wants=myservice1.service myservice2.service
+After=network.target myservice1.service myservice2.service
+
+[Service]
+Type=simple
+ExecStart=/folder_name/epoll_http_server/epoll_http_server
+WorkingDirectory=/folder_name/epoll_http_server
+Restart=on-failure
+User=username
+Group=groupname
+
+[Install]
+WantedBy=multi-user.target
+
