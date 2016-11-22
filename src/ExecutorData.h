@@ -16,6 +16,13 @@ struct PollData;
 
 struct ExecutorData
 {
+    ExecutorData() = default;
+
+    ExecutorData(const ExecutorData &ed) = delete;
+    ExecutorData(ExecutorData &&ed) = delete;
+    ExecutorData& operator=(const ExecutorData &ed) = delete;
+    ExecutorData& operator=(ExecutorData && ed) = delete;
+
     ~ExecutorData()
     {
         down();

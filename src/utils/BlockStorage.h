@@ -45,6 +45,7 @@ public:
         }
 
         empty.clear();
+        empty.reserve(blockSize);
 
         return 0;
     }
