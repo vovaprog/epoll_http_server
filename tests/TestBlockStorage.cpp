@@ -1,14 +1,19 @@
-#include <BlockStorage.h>
+//#include <BlockStorage.h>
+#include <BlockStorage2.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <chrono>
+#include <set>
+#include <vector>
+
+
 
 struct Data
 {
     int intValue1, intValue2;
     char buf[200];
-    BlockStorage<Data>::ServiceData bsData;
+  //  BlockStorage<Data>::ServiceData bsData;
 };
 
 
@@ -51,7 +56,7 @@ private:
 
 //====================================================================
 
-void checkStorageEmpty(BlockStorage<Data> &storage)
+/*void checkStorageEmpty(BlockStorage<Data> &storage)
 {
     BlockStorage<Data>::StorageInfo si;
     if(storage.getStorageInfo(si) == 0)
@@ -70,7 +75,7 @@ void checkStorageEmpty(BlockStorage<Data> &storage)
         printf("storage is not empty!\n");
         exit(-1);
     }
-}
+}*/
 
 //====================================================================
 
@@ -124,40 +129,43 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const in
 
 void testWithMalloc()
 {
-    const int totalItems = 1000000;
-    const int blockSize = 100;
+    //const int totalItems = 1000000;
+    //const int totalItems = 1000;
+    //const int blockSize = 100;
 
     BlockStorage<Data> storage;
-    std::vector<Data*> pointers;
+    Data * v = storage.allocate();
+    storage.free(v);
+    //std::vector<Data*> pointers;
 
-    storage.init(totalItems / blockSize, blockSize);
+    //storage.init(totalItems / blockSize, blockSize);
 
-    long long int millis;
+    //long long int millis;
 
     {
-        millis = getMilliseconds();
+        //millis = getMilliseconds();
 
-        testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
+        //testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
 
-        millis = getMilliseconds() - millis;
-        printf("block storage: %lld\n", millis);
+        //millis = getMilliseconds() - millis;
+        //printf("block storage: %lld\n", millis);
     }
 
     {
-        millis = getMilliseconds();
+        //millis = getMilliseconds();
 
-        testStorage(malloc, free, totalItems, blockSize);
+        //testStorage(malloc, free, totalItems, blockSize);
 
-        millis = getMilliseconds() - millis;
-        printf("malloc: %lld\n", millis);
+        //millis = getMilliseconds() - millis;
+        //printf("malloc: %lld\n", millis);
     }
 
-    checkStorageEmpty(storage);
+    //checkStorageEmpty(storage);
 }
 
 //====================================================================
 
-void testIteration()
+/*void testIteration()
 {
     const int totalItems = 100000;
     const int blockSize = 10;
@@ -241,14 +249,16 @@ void testIteration()
     }
 
     checkStorageEmpty(storage);
-}
+}*/
 
 //====================================================================
+
+
 
 int main()
 {
     testWithMalloc();
-    testIteration();
+    //testIteration();
 
     printf("\n============\nall tests ok\n");
 

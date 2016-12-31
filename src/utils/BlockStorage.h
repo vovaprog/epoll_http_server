@@ -2,7 +2,6 @@
 #define BLOCK_STORAGE_H
 
 #include <vector>
-#include <set>
 
 template<class T>
 class BlockStorage
