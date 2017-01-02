@@ -1,29 +1,22 @@
-#ifndef BLOCK_STORAGE2_H
-#define BLOCK_STORAGE2_H
+#ifndef FIXED_SIZE_ALLOCATOR_H
+#define FIXED_SIZE_ALLOCATOR_H
 
 #include <stdio.h>
 
-template<class T, int blockSize = 1024>
-class BlockStorage
+#include <stdlib.h>
+
+
+template <typename T, int blockSize = 0x1000>
+class FixedSizeAllocator
 {
 public:
-
-    BlockStorage() = default;
-
-    BlockStorage(const BlockStorage &bs) = delete;
-    BlockStorage(BlockStorage &&bs) = delete;
-    BlockStorage& operator=(const BlockStorage &bs) = delete;
-    BlockStorage& operator=(BlockStorage && bs) = delete;
+    FixedSizeAllocator() = default;
 
 
-    ~BlockStorage()
+    ~FixedSizeAllocator()
     {
-        printf("~~~ A\n");
-
         for(Block *block = blocks; block != nullptr; )
         {
-            printf("~~~ B\n");
-
             Block *tempBlock = block->next;
             delete block;
             block = tempBlock;
@@ -32,11 +25,8 @@ public:
         freeListHead = nullptr;
     }
 
-
     T* allocate()
     {
-        printf("alloc\n");
-
         if(freeListHead == nullptr)
         {
             Block *newBlock = new Block;
@@ -61,15 +51,11 @@ public:
         return reinterpret_cast<T*>(result);
     }
 
-    int free(T *data)
+    void free(T *item)
     {
-        printf("free\n");
-
         Item *tempHead = freeListHead;
-        freeListHead = reinterpret_cast<Item*>(data);
+        freeListHead = reinterpret_cast<Item*>(item);
         freeListHead->next = tempHead;
-
-        return 0;
     }
 
 private:

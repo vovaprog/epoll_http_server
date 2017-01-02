@@ -1,19 +1,19 @@
-//#include <BlockStorage.h>
-#include <BlockStorage2.h>
+#include <BlockStorage.h>
+#include <ListStorage.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <chrono>
 #include <set>
-#include <vector>
-
-
+#include <list>
+#include <forward_list>
 
 struct Data
 {
     int intValue1, intValue2;
     char buf[200];
-  //  BlockStorage<Data>::ServiceData bsData;
+    BlockStorage<Data>::ServiceData bsData;
+    ListStorage<Data>::ServiceData listStorageData;
 };
 
 
@@ -56,7 +56,7 @@ private:
 
 //====================================================================
 
-/*void checkStorageEmpty(BlockStorage<Data> &storage)
+void checkStorageEmpty(BlockStorage<Data> &storage)
 {
     BlockStorage<Data>::StorageInfo si;
     if(storage.getStorageInfo(si) == 0)
@@ -75,7 +75,7 @@ private:
         printf("storage is not empty!\n");
         exit(-1);
     }
-}*/
+}
 
 //====================================================================
 
@@ -129,43 +129,40 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const in
 
 void testWithMalloc()
 {
-    //const int totalItems = 1000000;
-    //const int totalItems = 1000;
-    //const int blockSize = 100;
+    const int totalItems = 1000000;
+    const int blockSize = 100;
 
     BlockStorage<Data> storage;
-    Data * v = storage.allocate();
-    storage.free(v);
-    //std::vector<Data*> pointers;
+    std::vector<Data*> pointers;
 
-    //storage.init(totalItems / blockSize, blockSize);
+    storage.init(totalItems / blockSize, blockSize);
 
-    //long long int millis;
+    long long int millis;
 
     {
-        //millis = getMilliseconds();
+        millis = getMilliseconds();
 
-        //testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
+        testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
 
-        //millis = getMilliseconds() - millis;
-        //printf("block storage: %lld\n", millis);
+        millis = getMilliseconds() - millis;
+        printf("block storage: %lld\n", millis);
     }
 
     {
-        //millis = getMilliseconds();
+        millis = getMilliseconds();
 
-        //testStorage(malloc, free, totalItems, blockSize);
+        testStorage(malloc, free, totalItems, blockSize);
 
-        //millis = getMilliseconds() - millis;
-        //printf("malloc: %lld\n", millis);
+        millis = getMilliseconds() - millis;
+        printf("malloc: %lld\n", millis);
     }
 
-    //checkStorageEmpty(storage);
+    checkStorageEmpty(storage);
 }
 
 //====================================================================
 
-/*void testIteration()
+void testIteration()
 {
     const int totalItems = 100000;
     const int blockSize = 10;
@@ -249,16 +246,68 @@ void testWithMalloc()
     }
 
     checkStorageEmpty(storage);
-}*/
+}
 
 //====================================================================
 
+/*template<typename List, int ITEM_COUNT=100, int ITERATIONS=1>
+void testList(const char *testName)
+{
+    long long int millis;
 
+    millis = getMilliseconds();
+
+    {
+        List list;
+
+        for(int i=0;i<ITERATIONS;++i)
+        {
+            for(int i=0;i<ITEM_COUNT;++i)
+            {
+                list.push_front(i);
+            }
+            for(int i=0;i<ITEM_COUNT;++i)
+            {
+                list.pop_front();
+            }
+        }
+    }
+
+    millis = getMilliseconds() - millis;
+    printf("%s: %lld\n", testName, millis);
+}
+
+void testLists()
+{
+    testList<std::forward_list<int, FixedSizeAllocator<int>>>("forward_list fixed size allocator");
+    testList<std::forward_list<int>>("forward_list default allocator");
+
+    testList<std::list<int, FixedSizeAllocator<int>>>("list fixed size allocator");
+    testList<std::list<int>>("list default allocator");
+}*/
+
+void testListStorage()
+{
+    ListStorage<Data> ls;
+
+    for(int i = 1;i<=10;++i)
+    {
+        Data *data = ls.allocate();
+        data->intValue1 = i;
+    }
+
+    for(Data *cur = ls.head();cur != nullptr;cur=ls.next(cur))
+    {
+        printf("item: %d\n", cur->intValue1);
+    }
+}
 
 int main()
 {
-    testWithMalloc();
+    //testWithMalloc();
     //testIteration();
+    //testLists();
+    testListStorage();
 
     printf("\n============\nall tests ok\n");
 
