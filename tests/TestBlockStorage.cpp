@@ -10,6 +10,16 @@
 
 struct Data
 {
+    Data()
+    {
+        printf("Data default ctr\n");
+    }
+
+    ~Data()
+    {
+        printf("Data ~~~\n");
+    }
+
     int intValue1, intValue2;
     char buf[200];
     BlockStorage<Data>::ServiceData bsData;

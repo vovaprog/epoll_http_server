@@ -48,11 +48,14 @@ public:
         Item *result = freeListHead;
         freeListHead = result->next;
 
-        return reinterpret_cast<T*>(result);
+        return new (reinterpret_cast<void*>(result)) T;
+        //return reinterpret_cast<T*>(result);
     }
 
     void free(T *item)
     {
+        item->~T();
+
         Item *tempHead = freeListHead;
         freeListHead = reinterpret_cast<Item*>(item);
         freeListHead->next = tempHead;

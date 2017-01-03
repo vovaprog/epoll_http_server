@@ -26,6 +26,7 @@ public:
     T* allocate()
     {
         T* newItem = allocator.allocate();
+        newItem->listStorageData.next = nullptr;
         newItem->listStorageData.prev = _tail;
         if(_tail != nullptr)
         {
@@ -41,12 +42,20 @@ public:
 
     void free(T *item)
     {
-        if(item->listStorageData.prev)
+        if(item == _head)
+        {
+            _head = item->listStorageData.next;
+        }
+        if(item == _tail)
+        {
+            _tail = item->listStorageData.prev;
+        }
+        if(item->listStorageData.prev != nullptr)
         {
             item->listStorageData.prev->listStorageData.next =
                     item->listStorageData->next;
         }
-        if(item->listStorageData.next)
+        if(item->listStorageData.next != nullptr)
         {
             item->listStorageData.next->listStorageData.prev =
                     item->listStorageData.prev;
