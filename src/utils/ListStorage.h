@@ -11,6 +11,13 @@ public:
         T *prev = nullptr;
     };
 
+    ListStorage() = default;
+
+    ListStorage(const ListStorage &ls) = delete;
+    ListStorage(ListStorage &&ls) = delete;
+    ListStorage& operator=(const ListStorage &ls) = delete;
+    ListStorage& operator=(ListStorage && ls) = delete;
+
     ~ListStorage()
     {
         T *cur = _head;
@@ -23,21 +30,13 @@ public:
     }
 
 
-    T* allocate()
+    inline T* allocate()
     {
         T* newItem = allocator.allocate();
-        newItem->listStorageData.next = nullptr;
-        newItem->listStorageData.prev = _tail;
-        if(_tail != nullptr)
-        {
-            _tail->listStorageData.next = newItem;
-        }
-        _tail = newItem;
-        if(_head == nullptr)
-        {
-            _head = newItem;
-        }
-        return _tail;
+        //printf("%llu\n",(long long int)newItem->listStorageData.prev);
+        newItem->listStorageData.next = _head;
+        _head = newItem;
+        return _head;
     }
 
     void free(T *item)
@@ -45,10 +44,6 @@ public:
         if(item == _head)
         {
             _head = item->listStorageData.next;
-        }
-        if(item == _tail)
-        {
-            _tail = item->listStorageData.prev;
         }
         if(item->listStorageData.prev != nullptr)
         {
@@ -78,7 +73,6 @@ protected:
 
     Allocator allocator;
     T *_head = nullptr;
-    T *_tail = nullptr;
 };
 
 #endif // LIST_STORAGE_H

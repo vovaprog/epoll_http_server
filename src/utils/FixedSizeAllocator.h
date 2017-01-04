@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 
 template <typename T, int blockSize = 0x1000>
@@ -12,6 +13,10 @@ class FixedSizeAllocator
 public:
     FixedSizeAllocator() = default;
 
+    FixedSizeAllocator(const FixedSizeAllocator &fa) = delete;
+    FixedSizeAllocator(FixedSizeAllocator &&fa) = delete;
+    FixedSizeAllocator& operator=(const FixedSizeAllocator &fa) = delete;
+    FixedSizeAllocator& operator=(FixedSizeAllocator && fa) = delete;
 
     ~FixedSizeAllocator()
     {
@@ -25,11 +30,12 @@ public:
         freeListHead = nullptr;
     }
 
-    T* allocate()
+    inline T* allocate()
     {
         if(freeListHead == nullptr)
         {
             Block *newBlock = new Block;
+            //memset(newBlock, 0x33, sizeof(Block));
             newBlock->next = blocks;
             blocks = newBlock;
 
@@ -52,7 +58,7 @@ public:
         //return reinterpret_cast<T*>(result);
     }
 
-    void free(T *item)
+    inline void free(T *item)
     {
         item->~T();
 
