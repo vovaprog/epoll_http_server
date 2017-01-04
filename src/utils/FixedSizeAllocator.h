@@ -20,14 +20,13 @@ public:
 
     ~FixedSizeAllocator()
     {
-        for(Block *block = blocks; block != nullptr; )
+        Block *cur = blocks;
+        while(cur != nullptr)
         {
-            Block *tempBlock = block->next;
-            delete block;
-            block = tempBlock;
+            Block *temp = cur->next;
+            delete cur;
+            cur = temp;
         }
-        blocks = nullptr;
-        freeListHead = nullptr;
     }
 
     inline T* allocate()
@@ -44,7 +43,7 @@ public:
             {
                 for(int i = 0; i < blockSize - 1; ++i)
                 {
-                    newBlock->items[i].next = &(newBlock->items[i+1]);
+                    newBlock->items[i].next = &(newBlock->items[i + 1]);
                 }
             }
 
@@ -54,27 +53,29 @@ public:
         Item *result = freeListHead;
         freeListHead = result->next;
 
-        return new (reinterpret_cast<void*>(result)) T;
+        return new(reinterpret_cast<void*>(result)) T;
         //return reinterpret_cast<T*>(result);
     }
 
-    inline void free(T *item)
+    inline void free(T *p)
     {
-        item->~T();
+        p->~T();
 
-        Item *tempHead = freeListHead;
-        freeListHead = reinterpret_cast<Item*>(item);
-        freeListHead->next = tempHead;
+        Item *item = reinterpret_cast<Item*>(p);
+        item->next = freeListHead;
+        freeListHead = item;
     }
 
 private:
 
-    union Item {
+    union Item
+    {
         Item *next = nullptr;
         char data[sizeof(T)];
     };
 
-    struct Block {
+    struct Block
+    {
         Block *next = nullptr;
         Item items[blockSize];
     };

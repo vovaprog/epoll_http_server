@@ -12,20 +12,27 @@ struct Data
 {
     Data()
     {
-        printf("Data default ctr\n");
+        ++constructorCallCounter;
+        //printf("Data default ctr\n");
     }
 
     ~Data()
     {
-        printf("Data ~~~\n");
+        ++destructorCallCounter;
+        //printf("Data ~~~\n");
     }
 
     int intValue1, intValue2;
     char buf[200];
     BlockStorage<Data>::ServiceData bsData;
     ListStorage<Data>::ServiceData listStorageData;
+
+    static int constructorCallCounter;
+    static int destructorCallCounter;
 };
 
+int Data::constructorCallCounter = 0;
+int Data::destructorCallCounter = 0;
 
 inline long long int getMilliseconds()
 {
@@ -36,10 +43,11 @@ inline long long int getMilliseconds()
 
 //====================================================================
 
+template<typename Storage>
 class AllocateFunctor
 {
 public:
-    AllocateFunctor(BlockStorage<Data> *storage): storage(storage) { }
+    AllocateFunctor(Storage *storage): storage(storage) { }
 
     Data* operator()(int size)
     {
@@ -47,13 +55,14 @@ public:
     }
 
 private:
-    BlockStorage<Data> *storage = nullptr;
+    Storage *storage = nullptr;
 };
 
+template<typename Storage>
 class FreeFunctor
 {
 public:
-    FreeFunctor(BlockStorage<Data> *storage): storage(storage) { }
+    FreeFunctor(Storage *storage): storage(storage) { }
 
     void operator()(Data *data)
     {
@@ -61,7 +70,7 @@ public:
     }
 
 private:
-    BlockStorage<Data> *storage = nullptr;
+    Storage *storage = nullptr;
 };
 
 //====================================================================
@@ -90,7 +99,7 @@ void checkStorageEmpty(BlockStorage<Data> &storage)
 //====================================================================
 
 template<typename Allocate, typename Free>
-void testStorage(Allocate allocFun, Free freeFun, const int totalItems, const int blockSize)
+void testStorage(Allocate allocFun, Free freeFun, const int totalItems)
 {
     std::vector<Data*> pointers;
     pointers.reserve(totalItems);
@@ -142,17 +151,20 @@ void testWithMalloc()
     const int totalItems = 1000000;
     const int blockSize = 100;
 
-    BlockStorage<Data> storage;
+    BlockStorage<Data> blockStorage;
+    ListStorage<Data> listStorage;
     std::vector<Data*> pointers;
 
-    storage.init(totalItems / blockSize, blockSize);
+    blockStorage.init(totalItems / blockSize, blockSize);
 
     long long int millis;
 
     {
         millis = getMilliseconds();
 
-        testStorage(AllocateFunctor(&storage), FreeFunctor(&storage), totalItems, blockSize);
+        testStorage(AllocateFunctor<BlockStorage<Data>>(&blockStorage),
+                    FreeFunctor<BlockStorage<Data>>(&blockStorage),
+                    totalItems);
 
         millis = getMilliseconds() - millis;
         printf("block storage: %lld\n", millis);
@@ -161,162 +173,148 @@ void testWithMalloc()
     {
         millis = getMilliseconds();
 
-        testStorage(malloc, free, totalItems, blockSize);
+        testStorage(AllocateFunctor<ListStorage<Data>>(&listStorage),
+                    FreeFunctor<ListStorage<Data>>(&listStorage),
+                    totalItems);
+
+        millis = getMilliseconds() - millis;
+        printf("list storage: %lld\n", millis);
+    }
+
+    {
+        millis = getMilliseconds();
+
+        testStorage(malloc, free, totalItems);
 
         millis = getMilliseconds() - millis;
         printf("malloc: %lld\n", millis);
     }
 
-    checkStorageEmpty(storage);
+    checkStorageEmpty(blockStorage);
+    if(listStorage.head() != nullptr)
+    {
+        printf("list storage is not empty!\n");
+        exit(-1);
+    }
 }
 
 //====================================================================
 
-void testIteration()
+void printListStorage(ListStorage<Data> &ls)
 {
-    const int totalItems = 100000;
-    const int blockSize = 10;
-    const int testItems = 30;
-
-    BlockStorage<Data> storage;
-    std::vector<Data*> pointers;
-
-    storage.init(totalItems / blockSize, blockSize);
-    pointers.reserve(totalItems);
-
-    for(int i = 0; i < testItems; ++i)
+    printf("=======\n");
+    for(Data *cur = ls.head(); cur != nullptr; cur = ls.next(cur))
     {
-        Data *ptr = storage.allocate();
-        if(ptr == nullptr)
-        {
-            printf("allocation failed!\n");
-            exit(-1);
-        }
-        ptr->intValue1 = i;
-        pointers.push_back(ptr);
+        printf("%d ", cur->intValue1);
     }
+    printf("\n=======\n");
+}
 
-    BlockStorage<Data>::Iterator iter = storage.begin();
-    BlockStorage<Data>::Iterator end = storage.end();
-    int counter = 0;
 
-    for(; iter != end; ++iter)
+void checkListStorage(ListStorage<Data> &ls, std::set<int> vals)
+{
+    std::set<int>::size_type counter = 0;
+    for(Data *cur = ls.head(); cur != nullptr; cur = ls.next(cur))
     {
-        if(iter->intValue1 != counter)
-        {
-            printf("%d != %d\n", iter->intValue1, counter);
-            exit(-1);
-        }
         ++counter;
-    }
-
-    std::set<int> storageValues;
-
-    for(int i = 0; i < testItems; ++i)
-    {
-        if(i % 3 != 0 || (i >= 15 && i <= 20))
+        if(vals.count(cur->intValue1) != 1)
         {
-            storage.free(pointers[i]);
-            pointers[i] = nullptr;
-        }
-        else
-        {
-            storageValues.insert(pointers[i]->intValue1);
-        }
-    }
-
-    for(iter = storage.begin(); iter != end; ++iter)
-    {
-        if(storageValues.count(iter->intValue1) != 1)
-        {
-            printf("value %d not found!\n", iter->intValue1);
+            printf("invalid value!\n");
             exit(-1);
         }
-        else
-        {
-            storageValues.erase(iter->intValue1);
-            printf("value: %d\n", iter->intValue1);
-        }
     }
-
-    printf("-----\n");
-
-    for(auto & data : storage)
+    if(counter != vals.size())
     {
-        printf("value: %d\n", data.intValue1);
+        printf("invalid number of items!\n");
+        exit(-1);
     }
-
-
-    for(Data * p : pointers)
-    {
-        if(p != nullptr)
-        {
-            storage.free(p);
-        }
-    }
-
-    checkStorageEmpty(storage);
 }
 
-//====================================================================
-
-/*template<typename List, int ITEM_COUNT=100, int ITERATIONS=1>
-void testList(const char *testName)
-{
-    long long int millis;
-
-    millis = getMilliseconds();
-
-    {
-        List list;
-
-        for(int i=0;i<ITERATIONS;++i)
-        {
-            for(int i=0;i<ITEM_COUNT;++i)
-            {
-                list.push_front(i);
-            }
-            for(int i=0;i<ITEM_COUNT;++i)
-            {
-                list.pop_front();
-            }
-        }
-    }
-
-    millis = getMilliseconds() - millis;
-    printf("%s: %lld\n", testName, millis);
-}
-
-void testLists()
-{
-    testList<std::forward_list<int, FixedSizeAllocator<int>>>("forward_list fixed size allocator");
-    testList<std::forward_list<int>>("forward_list default allocator");
-
-    testList<std::list<int, FixedSizeAllocator<int>>>("list fixed size allocator");
-    testList<std::list<int>>("list default allocator");
-}*/
 
 void testListStorage()
 {
-    ListStorage<Data> ls;
+    const int ITEM_COUNT = 100;
 
-    for(int i = 1;i<=10;++i)
+    ListStorage<Data> ls;
+    std::set<int> vals;
+
+    Data *pointers[ITEM_COUNT];
+
+    int startCounter = Data::constructorCallCounter;
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
     {
         Data *data = ls.allocate();
         data->intValue1 = i;
+        vals.insert(i);
+        pointers[i] = data;
     }
 
-    for(Data *cur = ls.head();cur != nullptr;cur=ls.next(cur))
+    if(Data::constructorCallCounter - startCounter != ITEM_COUNT)
     {
-        printf("item: %d\n", cur->intValue1);
+        printf("Invalid number of constructor calls\n");
+        exit(-1);
+    }
+
+    printListStorage(ls);
+    checkListStorage(ls, vals);
+
+    startCounter = Data::destructorCallCounter;
+
+    for(int i = 0; i < ITEM_COUNT; i += 2)
+    {
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
+    }
+
+    if(Data::destructorCallCounter - startCounter != ITEM_COUNT / 2)
+    {
+        printf("Invalid number of destructor calls\n");
+        exit(-1);
+    }
+
+    printListStorage(ls);
+    checkListStorage(ls, vals);
+
+    for(int i = 1; i < ITEM_COUNT; i += 2)
+    {
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
+    }
+
+    printListStorage(ls);
+    checkListStorage(ls, vals);
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
+    {
+        Data *data = ls.allocate();
+        data->intValue1 = i;
+        vals.insert(i);
+        pointers[i] = data;
+    }
+
+    printListStorage(ls);
+    checkListStorage(ls, vals);
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
+    {
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
+    }
+
+    printListStorage(ls);
+    checkListStorage(ls, vals);
+
+    if(ls.head() != nullptr)
+    {
+        printf("ListStorage is not empty!\n");
+        exit(-1);
     }
 }
 
 int main()
 {
-    //testWithMalloc();
-    //testIteration();
-    //testLists();
+    testWithMalloc();
     testListStorage();
 
     printf("\n============\nall tests ok\n");

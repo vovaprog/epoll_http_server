@@ -4,9 +4,11 @@
 #include <FixedSizeAllocator.h>
 
 template<typename T, typename Allocator = FixedSizeAllocator<T>>
-class ListStorage {
+class ListStorage
+{
 public:
-    struct ServiceData {
+    struct ServiceData
+    {
         T *next = nullptr;
         T *prev = nullptr;
     };
@@ -33,7 +35,12 @@ public:
     inline T* allocate()
     {
         T* newItem = allocator.allocate();
-        //printf("%llu\n",(long long int)newItem->listStorageData.prev);
+        //printf("%llx\n",(long long int)newItem->listStorageData.prev);
+
+        if(_head != nullptr)
+        {
+            _head->listStorageData.prev = newItem;
+        }
         newItem->listStorageData.next = _head;
         _head = newItem;
         return _head;
@@ -48,12 +55,12 @@ public:
         if(item->listStorageData.prev != nullptr)
         {
             item->listStorageData.prev->listStorageData.next =
-                    item->listStorageData->next;
+                item->listStorageData.next;
         }
         if(item->listStorageData.next != nullptr)
         {
             item->listStorageData.next->listStorageData.prev =
-                    item->listStorageData.prev;
+                item->listStorageData.prev;
         }
 
         allocator.free(item);
