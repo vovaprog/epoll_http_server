@@ -230,6 +230,30 @@ void checkListStorage(ListStorage<Data> &ls, std::set<int> vals)
     }
 }
 
+template<bool CheckConstructor>
+class CallChecker {
+public:
+    CallChecker(int expectedValue):
+        expectedValue(expectedValue)
+    {
+        startCounter = CheckConstructor ?
+            Data::constructorCallCounter : Data::destructorCallCounter;
+    }
+    ~CallChecker()
+    {
+        int curCounter = CheckConstructor ?
+            Data::constructorCallCounter : Data::destructorCallCounter;
+
+        if(curCounter - startCounter != expectedValue)
+        {
+            printf("invalid number of constructor/destructor calls!\n");
+            exit(-1);
+        }
+    }
+private:
+    int startCounter;
+    int expectedValue;
+};
 
 void testListStorage()
 {
@@ -240,46 +264,42 @@ void testListStorage()
 
     Data *pointers[ITEM_COUNT];
 
-    int startCounter = Data::constructorCallCounter;
-
-    for(int i = 0; i < ITEM_COUNT; ++i)
     {
-        Data *data = ls.allocate();
-        data->intValue1 = i;
-        vals.insert(i);
-        pointers[i] = data;
-    }
+        CallChecker<true> callChecker(ITEM_COUNT);
 
-    if(Data::constructorCallCounter - startCounter != ITEM_COUNT)
-    {
-        printf("Invalid number of constructor calls\n");
-        exit(-1);
+        for(int i = 0; i < ITEM_COUNT; ++i)
+        {
+            Data *data = ls.allocate();
+            data->intValue1 = i;
+            vals.insert(i);
+            pointers[i] = data;
+        }
     }
 
     printListStorage(ls);
     checkListStorage(ls, vals);
 
-    startCounter = Data::destructorCallCounter;
-
-    for(int i = 0; i < ITEM_COUNT; i += 2)
     {
-        vals.erase(pointers[i]->intValue1);
-        ls.free(pointers[i]);
-    }
+        CallChecker<false> checker(ITEM_COUNT / 2);
 
-    if(Data::destructorCallCounter - startCounter != ITEM_COUNT / 2)
-    {
-        printf("Invalid number of destructor calls\n");
-        exit(-1);
+        for(int i = 0; i < ITEM_COUNT; i += 2)
+        {
+            vals.erase(pointers[i]->intValue1);
+            ls.free(pointers[i]);
+        }
     }
 
     printListStorage(ls);
     checkListStorage(ls, vals);
 
-    for(int i = 1; i < ITEM_COUNT; i += 2)
     {
-        vals.erase(pointers[i]->intValue1);
-        ls.free(pointers[i]);
+        CallChecker<false> checker(ITEM_COUNT / 2);
+
+        for(int i = 1; i < ITEM_COUNT; i += 2)
+        {
+            vals.erase(pointers[i]->intValue1);
+            ls.free(pointers[i]);
+        }
     }
 
     printListStorage(ls);
