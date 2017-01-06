@@ -1,30 +1,25 @@
-#include <BlockStorage.h>
 #include <ListStorage.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <chrono>
 #include <set>
-#include <list>
-#include <forward_list>
+#include <vector>
 
 struct Data
 {
     Data()
     {
         ++constructorCallCounter;
-        //printf("Data default ctr\n");
     }
 
     ~Data()
     {
         ++destructorCallCounter;
-        //printf("Data ~~~\n");
     }
 
     int intValue1, intValue2;
     char buf[200];
-    BlockStorage<Data>::ServiceData bsData;
     ListStorage<Data>::ServiceData listStorageData;
 
     static int constructorCallCounter;
@@ -72,29 +67,6 @@ public:
 private:
     Storage *storage = nullptr;
 };
-
-//====================================================================
-
-void checkStorageEmpty(BlockStorage<Data> &storage)
-{
-    BlockStorage<Data>::StorageInfo si;
-    if(storage.getStorageInfo(si) == 0)
-    {
-        printf("executors. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
-               si.allocatedBlocks, si.emptyItems, si.blockSize, si.maxBlocks);
-    }
-    else
-    {
-        printf("getStorageInfo failed!\n");
-        exit(-1);
-    }
-
-    if(si.allocatedBlocks * si.blockSize != si.emptyItems)
-    {
-        printf("storage is not empty!\n");
-        exit(-1);
-    }
-}
 
 //====================================================================
 
@@ -149,26 +121,11 @@ void testStorage(Allocate allocFun, Free freeFun, const int totalItems)
 void testWithMalloc()
 {
     const int totalItems = 1000000;
-    const int blockSize = 100;
 
-    BlockStorage<Data> blockStorage;
     ListStorage<Data> listStorage;
     std::vector<Data*> pointers;
 
-    blockStorage.init(totalItems / blockSize, blockSize);
-
     long long int millis;
-
-    {
-        millis = getMilliseconds();
-
-        testStorage(AllocateFunctor<BlockStorage<Data>>(&blockStorage),
-                    FreeFunctor<BlockStorage<Data>>(&blockStorage),
-                    totalItems);
-
-        millis = getMilliseconds() - millis;
-        printf("block storage: %lld\n", millis);
-    }
 
     {
         millis = getMilliseconds();
@@ -190,7 +147,6 @@ void testWithMalloc()
         printf("malloc: %lld\n", millis);
     }
 
-    checkStorageEmpty(blockStorage);
     if(listStorage.head() != nullptr)
     {
         printf("list storage is not empty!\n");
@@ -199,17 +155,6 @@ void testWithMalloc()
 }
 
 //====================================================================
-
-void printListStorage(ListStorage<Data> &ls)
-{
-    printf("=======\n");
-    for(Data *cur = ls.head(); cur != nullptr; cur = ls.next(cur))
-    {
-        printf("%d ", cur->intValue1);
-    }
-    printf("\n=======\n");
-}
-
 
 void checkListStorage(ListStorage<Data> &ls, std::set<int> vals)
 {
@@ -257,7 +202,7 @@ private:
 
 void testListStorage()
 {
-    const int ITEM_COUNT = 100;
+    const int ITEM_COUNT = 10000;
 
     ListStorage<Data> ls;
     std::set<int> vals;
@@ -274,10 +219,9 @@ void testListStorage()
             vals.insert(i);
             pointers[i] = data;
         }
-    }
 
-    printListStorage(ls);
-    checkListStorage(ls, vals);
+        checkListStorage(ls, vals);
+    }    
 
     {
         CallChecker<false> checker(ITEM_COUNT / 2);
@@ -287,10 +231,9 @@ void testListStorage()
             vals.erase(pointers[i]->intValue1);
             ls.free(pointers[i]);
         }
-    }
 
-    printListStorage(ls);
-    checkListStorage(ls, vals);
+        checkListStorage(ls, vals);
+    }
 
     {
         CallChecker<false> checker(ITEM_COUNT / 2);
@@ -300,30 +243,35 @@ void testListStorage()
             vals.erase(pointers[i]->intValue1);
             ls.free(pointers[i]);
         }
+
+        checkListStorage(ls, vals);
     }
 
-    printListStorage(ls);
-    checkListStorage(ls, vals);
-
-    for(int i = 0; i < ITEM_COUNT; ++i)
     {
-        Data *data = ls.allocate();
-        data->intValue1 = i;
-        vals.insert(i);
-        pointers[i] = data;
+        CallChecker<true> checker(ITEM_COUNT);
+
+        for(int i = 0; i < ITEM_COUNT; ++i)
+        {
+            Data *data = ls.allocate();
+            data->intValue1 = i;
+            vals.insert(i);
+            pointers[i] = data;
+        }
+
+        checkListStorage(ls, vals);
     }
 
-    printListStorage(ls);
-    checkListStorage(ls, vals);
-
-    for(int i = 0; i < ITEM_COUNT; ++i)
     {
-        vals.erase(pointers[i]->intValue1);
-        ls.free(pointers[i]);
-    }
+        CallChecker<false> checker(ITEM_COUNT);
 
-    printListStorage(ls);
-    checkListStorage(ls, vals);
+        for(int i = 0; i < ITEM_COUNT; ++i)
+        {
+            vals.erase(pointers[i]->intValue1);
+            ls.free(pointers[i]);
+        }
+
+        checkListStorage(ls, vals);
+    }
 
     if(ls.head() != nullptr)
     {

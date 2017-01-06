@@ -15,7 +15,7 @@
 #include <ProxyExecutorSplice.h>
 
 #include <PollData.h>
-#include <BlockStorage.h>
+#include <ListStorage.h>
 
 #include <sys/epoll.h>
 #include <atomic>
@@ -91,8 +91,8 @@ protected:
     SslProxyExecutor sslProxyExecutor;
 
 
-    BlockStorage<ExecutorData> execDatas;
-    BlockStorage<PollData> pollDatas;
+    ListStorage<ExecutorData> execDatas;
+    ListStorage<PollData> pollDatas;
 
 
     static const int MAX_EPOLL_EVENTS = 1000;

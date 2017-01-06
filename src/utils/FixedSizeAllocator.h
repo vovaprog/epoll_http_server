@@ -3,11 +3,7 @@
 
 #include <stdio.h>
 
-#include <stdlib.h>
-#include <string.h>
-
-
-template <typename T, int blockSize = 0x1000>
+template <typename T, int blockSize = 0x400>
 class FixedSizeAllocator
 {
 public:
@@ -20,6 +16,11 @@ public:
 
     ~FixedSizeAllocator()
     {
+        destroy();
+    }
+
+    void destroy()
+    {
         Block *cur = blocks;
         while(cur != nullptr)
         {
@@ -27,14 +28,16 @@ public:
             delete cur;
             cur = temp;
         }
+        blocks = nullptr;
+        freeListHead = nullptr;
     }
 
     inline T* allocate()
     {
         if(freeListHead == nullptr)
         {
+            //printf("allocation\n");
             Block *newBlock = new Block;
-            //memset(newBlock, 0x33, sizeof(Block));
             newBlock->next = blocks;
             blocks = newBlock;
 
@@ -84,4 +87,4 @@ private:
     Item *freeListHead = nullptr;
 };
 
-#endif
+#endif // FIXED_SIZE_ALLOCATOR_H

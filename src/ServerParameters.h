@@ -27,8 +27,6 @@ struct ServerParameters
         logArchiveCount = 10;
         executorTimeoutMillis = 10000;
         logStats = true;
-        maxAllocationBlocks = 1000;
-        allocationBlockSize = 100;
     }
 
     int load(const char *fileName);

@@ -3,6 +3,7 @@
 
 #include <FixedSizeAllocator.h>
 
+
 template<typename T, typename Allocator = FixedSizeAllocator<T>>
 class ListStorage
 {
@@ -22,6 +23,11 @@ public:
 
     ~ListStorage()
     {
+    }
+
+
+    void destroy()
+    {
         T *cur = _head;
         while(cur != nullptr)
         {
@@ -29,14 +35,13 @@ public:
             allocator.free(cur);
             cur = temp;
         }
+        _head = nullptr;
     }
 
 
     inline T* allocate()
     {
         T* newItem = allocator.allocate();
-        //printf("%llx\n",(long long int)newItem->listStorageData.prev);
-
         if(_head != nullptr)
         {
             _head->listStorageData.prev = newItem;
@@ -66,14 +71,35 @@ public:
         allocator.free(item);
     }
 
-    inline T* head()
+    inline T* head() const
     {
         return _head;
     }
 
-    inline T* next(const T* item)
+    inline T* next(const T* item) const
     {
         return item->listStorageData.next;
+    }
+
+
+    struct StorageInfo
+    {
+        int allocatedCount = 0;
+    };
+
+    int getStorageInfo(StorageInfo &si) const
+    {
+        T *cur = _head;
+        int counter = 0;
+        while(cur != nullptr)
+        {
+            ++counter;
+            cur = cur->listStorageData.next;
+        }
+
+        si.allocatedCount = counter;
+
+        return 0;
     }
 
 protected:

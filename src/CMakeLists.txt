@@ -45,6 +45,8 @@ set(SOURCE
 
     utils/TransferRingBuffer.h
     utils/TransferBuffer.h
+    utils/ListStorage.h
+    utils/FixedSizeAllocator.h
     utils/NetworkUtils.h       utils/NetworkUtils.cpp
     utils/TimeUtils.h          utils/TimeUtils.cpp
     utils/SslUtils.h           utils/SslUtils.cpp)
@@ -57,7 +59,6 @@ add_executable(epoll_http_server ${SOURCE})
 target_link_libraries(epoll_http_server ssl crypto tinyxml2)
 
 add_executable(test_http_request ../tests/TestHttpRequest.cpp HttpRequest.h HttpRequest.cpp)
-add_executable(test_block_storage ../tests/TestBlockStorage.cpp utils/BlockStorage.h
-               utils/FixedSizeAllocator.h utils/ListStorage.h)
+add_executable(test_list_storage ../tests/TestListStorage.cpp utils/FixedSizeAllocator.h utils/ListStorage.h)
 
 

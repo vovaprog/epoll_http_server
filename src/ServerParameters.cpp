@@ -78,8 +78,6 @@ int ServerParameters::load(const char *fileName)
     INT_PARAM(executorTimeoutMillis);
     INT_PARAM(logFileSize);
     INT_PARAM(logArchiveCount);
-    INT_PARAM(maxAllocationBlocks);
-    INT_PARAM(allocationBlockSize);
     STRING_PARAM(rootFolder);
     STRING_PARAM(logFolder);
 
@@ -208,8 +206,6 @@ void ServerParameters::writeToLog(Log *log) const
     log->info("logType: %s\n", Log::logTypeString(logType));
     log->info("logFileSize: %d\n", logFileSize);
     log->info("logArchiveCount: %d\n", logArchiveCount);
-    log->info("maxAllocationBlocks: %d\n", maxAllocationBlocks);
-    log->info("allocationBlockSize: %d\n", allocationBlockSize);
     for(int port : httpPorts)
     {
         log->info("httpPort: %d\n", port);

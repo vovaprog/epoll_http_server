@@ -356,27 +356,16 @@ void PollLoop::checkTimeout(long long int curMillis)
 {
     removeExecDatas.erase(removeExecDatas.begin(), removeExecDatas.end());
 
-    BlockStorage<ExecutorData>::Iterator iter = execDatas.begin();
-    BlockStorage<ExecutorData>::Iterator end = execDatas.end();
-
-    for(; iter != end ; ++iter)
+    for(ExecutorData *execData = execDatas.head();
+        execData != nullptr; execData = execDatas.next(execData))
     {
-        ExecutorData *execData = iter.pointer();
-
-        if(execData == nullptr)
+        if(execData->removeOnTimeout)
         {
-            log->error("checkTimeout - executor data is null\n");
-        }
-        else
-        {
-            if(execData->removeOnTimeout)
+            if((curMillis - execData->lastProcessTime > parameters->executorTimeoutMillis) ||
+                    (curMillis - execData->createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
             {
-                if((curMillis - execData->lastProcessTime > parameters->executorTimeoutMillis) ||
-                        (curMillis - execData->createTime > ExecutorData::MAX_TIME_TO_LIVE_MILLIS))
-                {
-                    removeExecDatas.push_back(execData);
-                    execData->writeLog(log, Log::Level::debug, "timeout remove executor");
-                }
+                removeExecDatas.push_back(execData);
+                execData->writeLog(log, Log::Level::debug, "timeout remove executor");
             }
         }
     }
@@ -437,15 +426,6 @@ void PollLoop::destroy()
 
 int PollLoop::initDataStructs(const ServerParameters *params)
 {
-    if(execDatas.init(params->maxAllocationBlocks, params->allocationBlockSize) != 0)
-    {
-        return -1;
-    }
-    if(pollDatas.init(params->maxAllocationBlocks, params->allocationBlockSize * 2) != 0)
-    {
-        return -1;
-    }
-
     return 0;
 }
 
@@ -578,36 +558,23 @@ void PollLoop::logStats()
 
     log->info("%s<<<<<<<\n", tidBuf);
 
-    BlockStorage<ExecutorData>::StorageInfo siExec;
+    ListStorage<ExecutorData>::StorageInfo siExec;
     if(execDatas.getStorageInfo(siExec) == 0)
     {
-        log->info("%s   executors. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
-                  tidBuf, siExec.allocatedBlocks, siExec.emptyItems, siExec.blockSize, siExec.maxBlocks);
+        log->info("%s   executors. allocated: %d\n", tidBuf, siExec.allocatedCount);
     }
 
-    BlockStorage<PollData>::StorageInfo siPoll;
+    ListStorage<PollData>::StorageInfo siPoll;
     if(pollDatas.getStorageInfo(siPoll) == 0)
     {
-        log->info("%s   poll data. blocks: %d   empty: %d   blocksize: %d   maxBlocks: %d\n",
-                  tidBuf, siPoll.allocatedBlocks, siPoll.emptyItems, siPoll.blockSize, siPoll.maxBlocks);
+        log->info("%s   poll data. allocated: %d\n", tidBuf, siPoll.allocatedCount);
     }
 
 
-    BlockStorage<ExecutorData>::Iterator iter = execDatas.begin();
-    BlockStorage<ExecutorData>::Iterator end = execDatas.end();
-
-    for(; iter != end ; ++iter)
+    for(ExecutorData *execData = execDatas.head();
+        execData != nullptr; execData = execDatas.next(execData))
     {
-        ExecutorData *execData = iter.pointer();
-
-        if(execData == nullptr)
-        {
-            log->error("logStats - exec data is null\n");
-        }
-        else
-        {
-            execData->writeLog(log, Log::Level::info, tidBuf);
-        }
+        execData->writeLog(log, Log::Level::info, tidBuf);
     }
 
     log->info("%s>>>>>>>\n", tidBuf);
