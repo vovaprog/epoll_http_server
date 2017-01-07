@@ -1,8 +1,8 @@
-#ifndef LIST_STORAGE_H
-#define LIST_STORAGE_H
+#ifndef BLOCK_STORAGE_H
+#define BLOCK_STORAGE_H
 
 template <typename T, int blockSize = 0x400>
-class ListStorage
+class BlockStorage
 {
 public:
     struct ServiceData
@@ -11,14 +11,14 @@ public:
         T *prev = nullptr;
     };
 
-    ListStorage() = default;
+    BlockStorage() = default;
 
-    ListStorage(const ListStorage &fa) = delete;
-    ListStorage(ListStorage &&fa) = delete;
-    ListStorage& operator=(const ListStorage &fa) = delete;
-    ListStorage& operator=(ListStorage && fa) = delete;
+    BlockStorage(const BlockStorage &fa) = delete;
+    BlockStorage(BlockStorage &&fa) = delete;
+    BlockStorage& operator=(const BlockStorage &fa) = delete;
+    BlockStorage& operator=(BlockStorage && fa) = delete;
 
-    ~ListStorage()
+    ~BlockStorage()
     {
         destroy();
     }
@@ -43,24 +43,11 @@ public:
     {
         if(freeListHead == nullptr)
         {
-            Block *newBlock = new Block;
-            newBlock->next = blocks;
-            blocks = newBlock;
-
-            newBlock->items[blockSize - 1].listStorageData.next = nullptr;
-            if(blockSize > 1)
-            {
-                for(int i = 0; i < blockSize - 1; ++i)
-                {
-                    newBlock->items[i].listStorageData.next = &(newBlock->items[i + 1]);
-                }
-            }
-
-            freeListHead = &(newBlock->items[0]);
+            allocateBlock();
         }
 
         T *result = freeListHead;
-        freeListHead = result->listStorageData.next;
+        freeListHead = result->blockStorageData.next;
 
         addToUsedList(result);
 
@@ -72,7 +59,7 @@ public:
     {
         removeFromUsedList(p);
 
-        p->listStorageData.next = freeListHead;
+        p->blockStorageData.next = freeListHead;
         freeListHead = p;
     }
 
@@ -84,7 +71,7 @@ public:
 
     inline T* next(const T* item) const
     {
-        return item->listStorageData.next;
+        return item->blockStorageData.next;
     }
 
 
@@ -100,7 +87,7 @@ public:
         while(cur != nullptr)
         {
             ++counter;
-            cur = cur->listStorageData.next;
+            cur = cur->blockStorageData.next;
         }
 
         si.allocatedCount = counter;
@@ -111,14 +98,32 @@ public:
 
 protected:
 
+    inline void allocateBlock()
+    {
+        Block *newBlock = new Block;
+        newBlock->next = blocks;
+        blocks = newBlock;
+
+        newBlock->items[blockSize - 1].blockStorageData.next = nullptr;
+        if(blockSize > 1)
+        {
+            for(int i = 0; i < blockSize - 1; ++i)
+            {
+                newBlock->items[i].blockStorageData.next = &(newBlock->items[i + 1]);
+            }
+        }
+
+        freeListHead = &(newBlock->items[0]);
+    }
+
     inline void addToUsedList(T* newItem)
     {
         if(usedListHead != nullptr)
         {
-            usedListHead->listStorageData.prev = newItem;
+            usedListHead->blockStorageData.prev = newItem;
         }
-        newItem->listStorageData.prev = nullptr;
-        newItem->listStorageData.next = usedListHead;
+        newItem->blockStorageData.prev = nullptr;
+        newItem->blockStorageData.next = usedListHead;
         usedListHead = newItem;
     }
 
@@ -127,17 +132,17 @@ protected:
     {
         if(item == usedListHead)
         {
-            usedListHead = item->listStorageData.next;
+            usedListHead = item->blockStorageData.next;
         }
-        if(item->listStorageData.prev != nullptr)
+        if(item->blockStorageData.prev != nullptr)
         {
-            item->listStorageData.prev->listStorageData.next =
-                item->listStorageData.next;
+            item->blockStorageData.prev->blockStorageData.next =
+                item->blockStorageData.next;
         }
-        if(item->listStorageData.next != nullptr)
+        if(item->blockStorageData.next != nullptr)
         {
-            item->listStorageData.next->listStorageData.prev =
-                item->listStorageData.prev;
+            item->blockStorageData.next->blockStorageData.prev =
+                item->blockStorageData.prev;
         }
     }
 
@@ -155,4 +160,4 @@ private:
     T *usedListHead = nullptr;
 };
 
-#endif // LIST_STORAGE_H
+#endif // BLOCK_STORAGE_H

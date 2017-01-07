@@ -1,7 +1,7 @@
 #ifndef POLL_DATA_H
 #define POLL_DATA_H
 
-#include <ListStorage.h>
+#include <BlockStorage.h>
 
 struct ExecutorData;
 
@@ -23,7 +23,7 @@ struct PollData
     int fd = -1;
     ExecutorData *execData = nullptr;
 
-    ListStorage<PollData>::ServiceData listStorageData;
+    BlockStorage<PollData>::ServiceData blockStorageData;
 };
 
 

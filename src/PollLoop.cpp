@@ -558,13 +558,13 @@ void PollLoop::logStats()
 
     log->info("%s<<<<<<<\n", tidBuf);
 
-    ListStorage<ExecutorData>::StorageInfo siExec;
+    BlockStorage<ExecutorData>::StorageInfo siExec;
     if(execDatas.getStorageInfo(siExec) == 0)
     {
         log->info("%s   executors. allocated: %d\n", tidBuf, siExec.allocatedCount);
     }
 
-    ListStorage<PollData>::StorageInfo siPoll;
+    BlockStorage<PollData>::StorageInfo siPoll;
     if(pollDatas.getStorageInfo(siPoll) == 0)
     {
         log->info("%s   poll data. allocated: %d\n", tidBuf, siPoll.allocatedCount);

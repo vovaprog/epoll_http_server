@@ -5,7 +5,7 @@
 #include <ConnectionType.h>
 #include <Log.h>
 #include <HttpRequest.h>
-#include <ListStorage.h>
+#include <BlockStorage.h>
 
 #include <sys/types.h>
 #include <openssl/ssl.h>
@@ -79,7 +79,7 @@ struct ExecutorData
 
     ProxyParameters *proxy = nullptr;
 
-    ListStorage<ExecutorData>::ServiceData listStorageData;
+    BlockStorage<ExecutorData>::ServiceData blockStorageData;
 };
 
 #endif
