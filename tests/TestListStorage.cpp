@@ -29,6 +29,7 @@ struct Data
 int Data::constructorCallCounter = 0;
 int Data::destructorCallCounter = 0;
 
+
 inline long long int getMilliseconds()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -175,30 +176,6 @@ void checkListStorage(ListStorage<Data> &ls, std::set<int> vals)
     }
 }
 
-template<bool CheckConstructor>
-class CallChecker {
-public:
-    CallChecker(int expectedValue):
-        expectedValue(expectedValue)
-    {
-        startCounter = CheckConstructor ?
-            Data::constructorCallCounter : Data::destructorCallCounter;
-    }
-    ~CallChecker()
-    {
-        int curCounter = CheckConstructor ?
-            Data::constructorCallCounter : Data::destructorCallCounter;
-
-        if(curCounter - startCounter != expectedValue)
-        {
-            printf("invalid number of constructor/destructor calls!\n");
-            exit(-1);
-        }
-    }
-private:
-    int startCounter;
-    int expectedValue;
-};
 
 void testListStorage()
 {
@@ -209,69 +186,52 @@ void testListStorage()
 
     Data *pointers[ITEM_COUNT];
 
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
     {
-        CallChecker<true> callChecker(ITEM_COUNT);
-
-        for(int i = 0; i < ITEM_COUNT; ++i)
-        {
-            Data *data = ls.allocate();
-            data->intValue1 = i;
-            vals.insert(i);
-            pointers[i] = data;
-        }
-
-        checkListStorage(ls, vals);
-    }    
-
-    {
-        CallChecker<false> checker(ITEM_COUNT / 2);
-
-        for(int i = 0; i < ITEM_COUNT; i += 2)
-        {
-            vals.erase(pointers[i]->intValue1);
-            ls.free(pointers[i]);
-        }
-
-        checkListStorage(ls, vals);
+        Data *data = ls.allocate();
+        data->intValue1 = i;
+        vals.insert(i);
+        pointers[i] = data;
     }
+    checkListStorage(ls, vals);
 
+
+    for(int i = 0; i < ITEM_COUNT; i += 2)
     {
-        CallChecker<false> checker(ITEM_COUNT / 2);
-
-        for(int i = 1; i < ITEM_COUNT; i += 2)
-        {
-            vals.erase(pointers[i]->intValue1);
-            ls.free(pointers[i]);
-        }
-
-        checkListStorage(ls, vals);
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
     }
+    checkListStorage(ls, vals);
 
+
+    for(int i = 1; i < ITEM_COUNT; i += 2)
     {
-        CallChecker<true> checker(ITEM_COUNT);
-
-        for(int i = 0; i < ITEM_COUNT; ++i)
-        {
-            Data *data = ls.allocate();
-            data->intValue1 = i;
-            vals.insert(i);
-            pointers[i] = data;
-        }
-
-        checkListStorage(ls, vals);
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
     }
+    checkListStorage(ls, vals);
 
+
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
     {
-        CallChecker<false> checker(ITEM_COUNT);
-
-        for(int i = 0; i < ITEM_COUNT; ++i)
-        {
-            vals.erase(pointers[i]->intValue1);
-            ls.free(pointers[i]);
-        }
-
-        checkListStorage(ls, vals);
+        Data *data = ls.allocate();
+        data->intValue1 = i;
+        vals.insert(i);
+        pointers[i] = data;
     }
+    checkListStorage(ls, vals);
+
+
+    for(int i = 0; i < ITEM_COUNT; ++i)
+    {
+        vals.erase(pointers[i]->intValue1);
+        ls.free(pointers[i]);
+    }
+    checkListStorage(ls, vals);
+
+
 
     if(ls.head() != nullptr)
     {
