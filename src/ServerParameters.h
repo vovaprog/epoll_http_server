@@ -47,9 +47,6 @@ struct ServerParameters
 
     bool logStats;
 
-    int maxAllocationBlocks;
-    int allocationBlockSize;
-
     std::vector<int> httpPorts;
     std::vector<int> httpsPorts;
     std::vector<ProxyParameters> proxies;
