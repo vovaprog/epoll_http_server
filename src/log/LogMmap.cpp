@@ -58,6 +58,10 @@ int LogMmap::openFile()
     if(ftruncate(fd, logFileSize) != 0)
     {
         perror("ftruncate failed");
+
+        close(fd);
+        fd = -1;
+
         return -1;
     }
 
@@ -65,6 +69,10 @@ int LogMmap::openFile()
     if(p == MAP_FAILED)
     {
         perror("mmap failed");
+
+        close(fd);
+        fd = -1;
+
         return -1;
     }
 
@@ -82,9 +90,12 @@ void LogMmap::closeFile()
 
         buffer.init(nullptr, 0);
 
-        if(munmap(ptr, logFileSize) != 0)
+        if(ptr != nullptr)
         {
-            perror("munmap failed\n");
+            if(munmap(ptr, logFileSize) != 0)
+            {
+                perror("munmap failed\n");
+            }
         }
 
         close(fd);
