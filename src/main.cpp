@@ -2,6 +2,7 @@
 
 #include <signal.h>
 #include <atomic>
+#include <pthread.h>
 
 
 std::atomic_bool runFlag;
@@ -64,6 +65,8 @@ int main(int argc, char** argv)
     {
         return -1;
     }
+
+    pthread_setname_np(pthread_self(), "main");
 
     while(runFlag.load())
     {

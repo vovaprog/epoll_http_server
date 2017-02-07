@@ -225,6 +225,8 @@ int Server::start(ServerParameters &parameters)
 
 void Server::threadEntry(int pollLoopIndex)
 {
+    pthread_setname_np(pthread_self(), "epoll_loop");
+
     loops[pollLoopIndex].run();
 
     if(parameters.httpsPorts.size() > 0)
