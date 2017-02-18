@@ -4,6 +4,7 @@
 class Log;
 
 int socketConnectNonBlock(const char *address, int port, bool &connected, Log *log);
+int socketConnectUnixNonBlock(const char *path, bool &connected, Log *log);
 int socketConnectNonBlockCheck(int fd, Log *log);
 
 int socketListen(int port, Log *log);

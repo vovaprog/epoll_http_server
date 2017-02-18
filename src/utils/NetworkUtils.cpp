@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/un.h>
 
 
 int socketConnectNonBlock(const char *address, int port, bool &connected, Log *log)
@@ -32,6 +33,46 @@ int socketConnectNonBlock(const char *address, int port, bool &connected, Log *l
     remoteaddr.sin_port = htons(port);
 
     if(connect(sock, (struct sockaddr*)&remoteaddr, sizeof(remoteaddr)) != 0)
+    {
+        if(errno != EINPROGRESS)
+        {
+            log->error("connect failed: %s\n", strerror(errno));
+            close(sock);
+            return -1;
+        }
+    }
+    else
+    {
+        connected = true;
+    }
+
+    return sock;
+}
+
+
+int socketConnectUnixNonBlock(const char *path, bool &connected, Log *log)
+{
+    connected = false;
+
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(sockaddr_un));
+
+    addr.sun_family = AF_UNIX;
+    if(snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", path) >= (int)sizeof(addr.sun_path))
+    {
+        log->error("socket name is too long\n");
+        return -1;
+    }
+
+    int sock = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+
+    if(sock < 0)
+    {
+        log->error("socket failed: %s\n", strerror(errno));
+        return -1;
+    }
+
+    if(connect(sock, (struct sockaddr*)&addr, sizeof(sockaddr_un)) != 0)
     {
         if(errno != EINPROGRESS)
         {
