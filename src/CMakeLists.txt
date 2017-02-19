@@ -22,6 +22,7 @@ set(SOURCE
     ProcessResult.h
     ExecutorType.h
     ConnectionType.h
+    SocketType.h
     PollData.h
     ExecutorData.h     ExecutorData.cpp
     ServerParameters.h ServerParameters.cpp

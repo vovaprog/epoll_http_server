@@ -22,7 +22,25 @@ int ProxyExecutorSplice::up(ExecutorData &data)
 
     bool connected = false;
 
-    data.fd1 = socketConnectNonBlock(data.proxy->address.c_str(), data.proxy->port, connected, log);
+    if(data.proxy == nullptr)
+    {
+        log->error("proxy parameters are not set\n");
+        return -1;
+    }
+
+    if(data.proxy->socketType == SocketType::tcp)
+    {
+        data.fd1 = socketConnectNonBlock(data.proxy->address.c_str(), data.proxy->port, connected, log);
+    }
+    else if(data.proxy->socketType == SocketType::unix)
+    {
+        data.fd1 = socketConnectUnixNonBlock(data.proxy->address.c_str(), connected, log);
+    }
+    else
+    {
+        log->error("invalid socket type\n");
+        return -1;
+    }
 
     if(data.fd1 < 0)
     {

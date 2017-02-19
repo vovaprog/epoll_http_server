@@ -157,6 +157,22 @@ int ServerParameters::load(const char *fileName)
                 return -1;
             }
 
+            std::string socketTypeString = "tcp";
+            STRING_PARAM_RET(child, "socket", socketTypeString);
+            if(socketTypeString == "tcp")
+            {
+                proxy.socketType = SocketType::tcp;
+            }
+            else if(socketTypeString == "unix")
+            {
+                proxy.socketType = SocketType::unix;
+            }
+            else
+            {
+                printf("invalid socket type\n");
+                return -1;
+            }
+
             tinyxml2::XMLElement *el = getChild(child, "connectionType", false);
             if(el != nullptr)
             {
@@ -231,7 +247,19 @@ void ServerParameters::writeToLog(Log *log) const
             conTypeString = "ssl";
         }
 
-        log->info("proxy   prefix: %s   address: %s   port: %d   connection: %s\n", proxy.prefix.c_str(), proxy.address.c_str(), proxy.port, conTypeString);
+        const char *socketTypeString = "none";
+
+        if(proxy.socketType == SocketType::tcp)
+        {
+            socketTypeString = "tcp";
+        }
+        else if(proxy.socketType == SocketType::unix)
+        {
+            socketTypeString = "unix";
+        }
+
+        log->info("proxy   prefix: %s   address: %s   port: %d   connection: %s   socket: %s\n",
+                  proxy.prefix.c_str(), proxy.address.c_str(), proxy.port, conTypeString, socketTypeString);
     }
     log->info("-----------------------------\n");
 }
