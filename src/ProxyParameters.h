@@ -10,7 +10,7 @@ struct ProxyParameters
 {
     std::string prefix;
     std::string address;
-    int port;
+    int port = 0;
 
     // is declared int, because bitwise operations are performed with value
     int connectionType = (int)ConnectionType::none;

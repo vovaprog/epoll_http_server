@@ -152,16 +152,21 @@ int ServerParameters::load(const char *fileName)
             {
                 return -1;
             }
-            if(readElementInt(child, "port", proxy.port, true) != 0)
+            if(readElementInt(child, "port", proxy.port, false) != 0)
             {
                 return -1;
             }
 
             std::string socketTypeString = "tcp";
-            STRING_PARAM_RET(child, "socket", socketTypeString);
+            STRING_PARAM_RET(child, socket, socketTypeString);
             if(socketTypeString == "tcp")
             {
                 proxy.socketType = SocketType::tcp;
+                if(proxy.port <= 0)
+                {
+                    printf("proxy port is not set\n");
+                    return -1;
+                }
             }
             else if(socketTypeString == "unix")
             {

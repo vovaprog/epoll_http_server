@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 {
     const char *fileName = "./config.xml";
 
-    printf("USAGE: http_server config_file_name (default: %s)\n", fileName);
+    printf("USAGE: epoll_http_server config_file_name (default: %s)\n", fileName);
 
     if(argc > 1)
     {
