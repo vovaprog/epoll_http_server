@@ -32,6 +32,8 @@ int ProxyExecutorSplice::up(ExecutorData &data)
     {
         data.fd1 = socketConnectNonBlock(data.proxy->address.c_str(), data.proxy->port, connected, log);
     }
+    // splice can not work with unix domain sockets
+    // left this code here, may be splice will work with unix domain sockets in the future
     else if(data.proxy->socketType == SocketType::unix)
     {
         data.fd1 = socketConnectUnixNonBlock(data.proxy->address.c_str(), connected, log);
