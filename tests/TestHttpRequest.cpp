@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <chrono>
 
 void check_true(bool x, const char *file, int line, const char *function, const char *expression)
 {
@@ -134,11 +135,53 @@ void test2()
     CHECK_TRUE(strcmp(url, "/calendar/year/month/day") == 0);
 }
 
+long long int getMilliseconds()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::system_clock::now().time_since_epoch()
+           ).count();
+}
+
+void testPerformance()
+{
+    const char *data =
+        "GET /gallery/album/flowers%202016/1?album-view=3 HTTP/1.1\r\n"
+        "Host: 127.0.0.1:7000\r\n"
+        "User-Agent: Mozilla Firefox\r\n"
+        "Accept: text/html,application/xhtml+xml,application/xml\r\n"
+        "Accept-Language: en-US,en\r\n"
+        "Accept-Encoding: gzip, deflate\r\n"
+        "Connection: keep-alive\r\n"
+        "If-Modified-Since: Mon, 26 Sep 2016 10:15:30 GMT\r\n"
+        "Cache-Control: max-age=0\r\n\r\n";
+
+    int dataLen = strlen(data);
+
+    HttpRequest request;
+
+    const int iterCount = 10000000;
+
+    unsigned long long int millisStart = getMilliseconds();
+
+    for(int i = 0; i < iterCount; ++i)
+    {
+        if(request.parse(data, dataLen) != HttpRequest::ParseResult::finishOk)
+        {
+            printf("parse failed!\n");
+            exit(-1);
+        }
+    }
+
+    unsigned long long int millisDif = getMilliseconds() - millisStart;
+
+    printf("performance test milliseconds: %llu\n", millisDif);
+}
 
 int main()
 {
     test1();
     test2();
+    testPerformance();
 
     printf("\n============\nall tests ok\n");
 

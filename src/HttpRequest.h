@@ -7,15 +7,9 @@
 class HttpRequest
 {
 public:
-    ~HttpRequest()
-    {
-        if(urlBuffer != nullptr)
-        {
-            delete[] urlBuffer;
-            urlBuffer = nullptr;
-        }
-    }
+    HttpRequest();
 
+    ~HttpRequest();
 
     enum class ParseResult
     {
@@ -96,6 +90,8 @@ public:
 
 protected:
 
+    static int initSymbolArrays();
+
     int cur = 0;
     const char *data = nullptr;
     int size = 0;
@@ -131,6 +127,10 @@ protected:
 
     char *urlBuffer = nullptr;
     int urlBufferSize = 0;
+
+    static char checkUrlSymbols[0xff];
+    static char readUrlSymbols[0xff];
+    static char readHeaderKeySymbols[0xff];
 };
 
 #endif // HTTP_REQUEST_H
