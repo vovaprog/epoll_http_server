@@ -9,11 +9,13 @@ char HttpRequest::checkUrlSymbols[0xff];
 char HttpRequest::readUrlSymbols[0xff];
 char HttpRequest::readHeaderKeySymbols[0xff];
 
+
 HttpRequest::HttpRequest()
 {
     static int unused = initSymbolArrays();
     (void)unused;
 }
+
 
 HttpRequest::~HttpRequest()
 {
@@ -23,6 +25,7 @@ HttpRequest::~HttpRequest()
         urlBuffer = nullptr;
     }
 }
+
 
 int HttpRequest::initSymbolArrays()
 {
@@ -73,6 +76,7 @@ int HttpRequest::initSymbolArrays()
 
     return 0;
 }
+
 
 HttpRequest::ParseResult HttpRequest::parse(const char *data, int size)
 {
@@ -320,7 +324,7 @@ HttpRequest::ReadResult HttpRequest::readSpaces(int &length)
     {
         return ReadResult::needMoreData;
     }
-    else if(i == '\r' || i == '\n')
+    else if(data[i] == '\r' || data[i] == '\n')
     {
         return ReadResult::invalid;
     }
