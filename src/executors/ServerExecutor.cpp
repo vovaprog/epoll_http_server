@@ -47,7 +47,7 @@ ProcessResult ServerExecutor::process(ExecutorData &data, int fd, int events)
     struct sockaddr_in address;
     socklen_t addrlen = sizeof(address);
 
-    int clientSockFd = accept4(data.fd0, (struct sockaddr *)&address, (socklen_t*)&addrlen, SOCK_NONBLOCK);
+    int clientSockFd = accept4(data.fd0, (struct sockaddr *)&address, &addrlen, SOCK_NONBLOCK);
 
     if(clientSockFd == -1)
     {

@@ -163,16 +163,20 @@ void LogMmap::writeLog(const char *prefix, const char* format, va_list args)
 
     if(prefixLength >= bytesToWrite)
     {
+        // snprintf adds zero char if output is not big enough.
+        // bytesToWrite includes zero char. decrement it not to write zero to output.
         int bytesWritten = bytesToWrite - 1;
         buffer.endWrite(bytesWritten);
     }
     else
     {
-        int bytesToWrite = maxMessageSize - prefixLength;
+        bytesToWrite = maxMessageSize - prefixLength;
         int bytesWritten = vsnprintf(static_cast<char*>(data) + prefixLength, bytesToWrite, format, args);
 
         if(bytesWritten >= bytesToWrite)
         {
+            // snprintf adds zero char if output is not big enough.
+            // bytesToWrite includes zero char. decrement it not to write zero to output.
             bytesWritten = bytesToWrite - 1;
         }
 

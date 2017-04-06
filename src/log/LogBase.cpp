@@ -2,6 +2,10 @@
 
 #include <cstdarg>
 
+#define debugPrefix   "[DEBUG]  "
+#define infoPrefix    "[INFO]   "
+#define warningPrefix "[WARNING]"
+#define errorPrefix   "[ERROR]  "
 
 int LogBase::init(ServerParameters *params)
 {
@@ -17,7 +21,7 @@ void LogBase::debug(const char* format, ...)
         va_list args;
         va_start(args, format);
 
-        writeLog("[DEBUG]  ", format, args);
+        writeLog(debugPrefix, format, args);
 
         va_end(args);
     }
@@ -30,7 +34,7 @@ void LogBase::info(const char* format, ...)
     {
         va_list args;
         va_start(args, format);
-        writeLog("[INFO]   ", format, args);
+        writeLog(infoPrefix, format, args);
         va_end(args);
     }
 }
@@ -42,7 +46,7 @@ void LogBase::warning(const char* format, ...)
     {
         va_list args;
         va_start(args, format);
-        writeLog("[WARNING]", format, args);
+        writeLog(warningPrefix, format, args);
         va_end(args);
     }
 }
@@ -52,7 +56,7 @@ void LogBase::error(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    writeLog("[ERROR]  ", format, args);
+    writeLog(errorPrefix, format, args);
     va_end(args);
 }
 
@@ -64,7 +68,7 @@ void LogBase::writeLog(Level argLevel, const char *format, ...)
         va_list args;
         va_start(args, format);
 
-        writeLog("[DEBUG]  ", format, args);
+        writeLog(debugPrefix, format, args);
 
         va_end(args);
     }
@@ -73,7 +77,7 @@ void LogBase::writeLog(Level argLevel, const char *format, ...)
         va_list args;
         va_start(args, format);
 
-        writeLog("[INFO]   ", format, args);
+        writeLog(infoPrefix, format, args);
 
         va_end(args);
     }
@@ -82,7 +86,7 @@ void LogBase::writeLog(Level argLevel, const char *format, ...)
         va_list args;
         va_start(args, format);
 
-        writeLog("[WARNING] ", format, args);
+        writeLog(warningPrefix, format, args);
 
         va_end(args);
     }
@@ -91,7 +95,7 @@ void LogBase::writeLog(Level argLevel, const char *format, ...)
         va_list args;
         va_start(args, format);
 
-        writeLog("[ERROR]   ", format, args);
+        writeLog(errorPrefix, format, args);
 
         va_end(args);
     }

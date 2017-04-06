@@ -214,9 +214,6 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseRead(ExecutorData &dat
         data.bytesInPipe += bytes;
         return process_forwardResponseWrite(data);
     }
-
-    ++data.retryCounter;
-    return ProcessResult::ok;
 }
 
 

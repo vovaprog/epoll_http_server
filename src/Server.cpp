@@ -190,24 +190,24 @@ int Server::start(ServerParameters &parameters)
 
     //=================================================
 
-    int i = 0;
+    int counter = 0;
     for(int port : parameters.httpPorts)
     {
-        if(loops[i % parameters.threadCount].listenPort(port, ExecutorType::server) != 0)
+        if(loops[counter % parameters.threadCount].listenPort(port, ExecutorType::server) != 0)
         {
             stop();
             return -1;
         }
-        ++i;
+        ++counter;
     }
     for(int port : parameters.httpsPorts)
     {
-        if(loops[i % parameters.threadCount].listenPort(port, ExecutorType::serverSsl) != 0)
+        if(loops[counter % parameters.threadCount].listenPort(port, ExecutorType::serverSsl) != 0)
         {
             stop();
             return -1;
         }
-        ++i;
+        ++counter;
     }
 
     //=================================================

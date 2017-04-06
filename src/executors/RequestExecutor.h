@@ -22,12 +22,6 @@ protected:
 
     int readRequest(ExecutorData &data);
 
-    int checkApplicationUrl(ExecutorData &data, char *urlBuffer);
-
-    int checkFileUrl(ExecutorData &data, char *urlBuffer);
-
-    bool isUrlPrefix(const char *url, const char *prefix);
-
     enum class ParseRequestResult
     {
         again, file, proxy, invalid
