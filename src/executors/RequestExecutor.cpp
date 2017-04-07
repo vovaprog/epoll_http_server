@@ -54,7 +54,7 @@ int RequestExecutor::readRequest(ExecutorData &data)
     if(data.buffer.startWrite(p, size))
     {
         int errorCode = 0;
-        int rd = readFd0(data, p, size, errorCode);
+        ssize_t rd = readFd0(data, p, size, errorCode);
 
         if(rd <= 0)
         {
@@ -113,8 +113,10 @@ ProcessResult RequestExecutor::setExecutor(ExecutorData &data, Executor *pExecut
 
 ProxyParameters* RequestExecutor::findProxy(ExecutorData &data)
 {
-    int size = loop->parameters->proxies.size();
-    for(int i = 0; i < size ; ++i)
+    typedef decltype(loop->parameters->proxies)::size_type iterType;
+
+    iterType size = loop->parameters->proxies.size();
+    for(iterType i = 0; i < size ; ++i)
     {
         if(data.request.isUrlPrefix(loop->parameters->proxies[i].prefix.c_str()))
         {
@@ -171,7 +173,7 @@ RequestExecutor::ParseRequestResult RequestExecutor::parseRequest(ExecutorData &
                 }
                 else
                 {
-                    int urlLength = strlen(url);
+                    size_t urlLength = strlen(url);
 
                     if(loop->rootFolderLength + urlLength <= PollLoopBase::MAX_FILE_NAME)
                     {

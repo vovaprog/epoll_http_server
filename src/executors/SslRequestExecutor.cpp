@@ -140,7 +140,7 @@ ProcessResult SslRequestExecutor::process(ExecutorData &data, int fd, int events
 
 ssize_t SslRequestExecutor::readFd0(ExecutorData &data, void *buf, size_t count, int &errorCode)
 {
-    int result = SSL_read(data.ssl, buf, count);
+    int result = SSL_read(data.ssl, buf, static_cast<int>(count));
 
     if(result > 0)
     {

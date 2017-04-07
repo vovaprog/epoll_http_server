@@ -35,11 +35,11 @@ int HttpResponse::notFound404(char *buffer, int size)
         "<p>The requested URL was not found on this server.</p>"
         "</body></html>";
 
-    int htmlLength = strlen(html);
+    size_t htmlLength = strlen(html);
 
     int ret = snprintf(buffer, size,
                        "HTTP/1.1 404 Not Found\r\n"
-                       "Content-Length: %d\r\n"
+                       "Content-Length: %zu\r\n"
                        "Connection: close\r\n\r\n%s", htmlLength, html);
 
     if(ret >= size)

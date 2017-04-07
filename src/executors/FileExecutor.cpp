@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
-#include <algorithm>
 
 
 int FileExecutor::init(PollLoopBase *loop)
@@ -179,7 +178,7 @@ ProcessResult FileExecutor::process_sendHeaders(ExecutorData &data)
     if(data.buffer.startRead(p, size))
     {
         int errorCode = 0;
-        int bytesWritten = writeFd0(data, p, size, errorCode);
+        ssize_t bytesWritten = writeFd0(data, p, size, errorCode);
 
         if(bytesWritten <= 0)
         {
@@ -223,7 +222,7 @@ ProcessResult FileExecutor::process_sendHeaders(ExecutorData &data)
 
 ProcessResult FileExecutor::process_sendFile(ExecutorData &data)
 {
-    int bytesWritten = sendfile(data.fd0, data.fd1, &data.filePosition, data.bytesToSend);
+    ssize_t bytesWritten = sendfile(data.fd0, data.fd1, &data.filePosition, data.bytesToSend);
     if(bytesWritten <= 0)
     {
         if(errno == EAGAIN || errno == EWOULDBLOCK)

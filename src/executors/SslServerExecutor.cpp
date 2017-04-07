@@ -36,7 +36,7 @@ int SslServerExecutor::up(ExecutorData &data)
 }
 
 
-ProcessResult SslServerExecutor::process(ExecutorData &data, int fd, int events)
+ProcessResult SslServerExecutor::process(ExecutorData &data, int fd, int /*events*/)
 {
     if(fd != data.fd0)
     {

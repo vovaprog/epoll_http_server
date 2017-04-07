@@ -126,7 +126,7 @@ ProcessResult ProxyExecutorSplice::process_forwardRequest(ExecutorData &data)
 
     if(data.buffer.startRead(p, size))
     {
-        int bytesWritten = write(data.fd1, p, size);
+        ssize_t bytesWritten = write(data.fd1, p, size);
 
         if(bytesWritten <= 0)
         {
@@ -174,9 +174,9 @@ ProcessResult ProxyExecutorSplice::process_forwardRequest(ExecutorData &data)
 
 ProcessResult ProxyExecutorSplice::process_forwardResponseRead(ExecutorData &data)
 {
-    int bytes = splice(data.fd1 , NULL, data.pipeWriteFd, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+    ssize_t bytes = splice(data.fd1 , NULL, data.pipeWriteFd, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
-    log->debug("splice read bytes: %d\n", bytes);
+    log->debug("splice read bytes: %zd\n", bytes);
 
     if(bytes == 0)
     {
@@ -221,9 +221,9 @@ ProcessResult ProxyExecutorSplice::process_forwardResponseWrite(ExecutorData &da
 {
     if(data.bytesInPipe > 0)
     {
-        int bytes = splice(data.pipeReadFd, NULL, data.fd0, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+        ssize_t bytes = splice(data.pipeReadFd, NULL, data.fd0, NULL, 100000, SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
-        log->debug("splice write bytes: %d\n", bytes);
+        log->debug("splice write bytes: %zd\n", bytes);
 
         if(bytes == 0)
         {

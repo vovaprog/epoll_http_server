@@ -9,7 +9,7 @@
 
 ssize_t sslWriteFd0(Executor *exec, ExecutorData &data, const void *buf, size_t count, int &errorCode, Log *log)
 {
-    int result = SSL_write(data.ssl, buf, count);
+    int result = SSL_write(data.ssl, buf, static_cast<int>(count));
 
     if(result > 0)
     {

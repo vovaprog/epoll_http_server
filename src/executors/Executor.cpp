@@ -5,7 +5,7 @@
 
 ssize_t Executor::readFd0(ExecutorData &data, void *buf, size_t count, int &errorCode)
 {
-    int result = read(data.fd0, buf, count);
+    ssize_t result = read(data.fd0, buf, count);
 
     if(result > 0)
     {
@@ -21,7 +21,7 @@ ssize_t Executor::readFd0(ExecutorData &data, void *buf, size_t count, int &erro
 
 ssize_t Executor::writeFd0(ExecutorData &data, const void *buf, size_t count, int &errorCode)
 {
-    int result = write(data.fd0, buf, count);
+    ssize_t result = write(data.fd0, buf, count);
 
     if(result > 0)
     {

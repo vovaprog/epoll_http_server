@@ -30,7 +30,7 @@ public:
 
     static const int MAX_FILE_NAME = 300;
     char fileNameBuffer[MAX_FILE_NAME + 1];
-    int rootFolderLength = 0;
+    size_t rootFolderLength = 0;
 
     ServerParameters *parameters = nullptr;
 

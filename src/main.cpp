@@ -8,7 +8,7 @@
 std::atomic_bool runFlag;
 
 
-static void sigIntHandler(int signalNumber)
+static void sigIntHandler(int /*signalNumber*/)
 {
     printf("sig int\n");
 

@@ -7,9 +7,10 @@
 #define warningPrefix "[WARNING]"
 #define errorPrefix   "[ERROR]  "
 
+
 int LogBase::init(ServerParameters *params)
 {
-    this->level = params->logLevel;
+    level = params->logLevel;
     return 0;
 }
 
@@ -63,39 +64,29 @@ void LogBase::error(const char* format, ...)
 
 void LogBase::writeLog(Level argLevel, const char *format, ...)
 {
-    if(argLevel == Level::debug && level <= Level::debug)
+    if(argLevel >= level)
     {
+        const char *prefix = errorPrefix;
+
+        switch(argLevel){
+        case Level::debug:
+            prefix = debugPrefix;
+            break;
+        case Level::info:
+            prefix = infoPrefix;
+            break;
+        case Level::warning:
+            prefix = warningPrefix;
+            break;
+        case Level::error:
+            prefix = errorPrefix;
+            break;
+        }
+
         va_list args;
         va_start(args, format);
 
-        writeLog(debugPrefix, format, args);
-
-        va_end(args);
-    }
-    else if(argLevel == Level::info && level <= Level::info)
-    {
-        va_list args;
-        va_start(args, format);
-
-        writeLog(infoPrefix, format, args);
-
-        va_end(args);
-    }
-    else if(argLevel == Level::warning && level <= Level::warning)
-    {
-        va_list args;
-        va_start(args, format);
-
-        writeLog(warningPrefix, format, args);
-
-        va_end(args);
-    }
-    else if(argLevel == Level::error && level <= Level::error)
-    {
-        va_list args;
-        va_start(args, format);
-
-        writeLog(errorPrefix, format, args);
+        writeLog(prefix, format, args);
 
         va_end(args);
     }

@@ -111,7 +111,7 @@ void test2()
                            "Content-Length: 50\r\n\r\n"
                            "12345678901234567890123456789012345678901234567890";
 
-    int dataLen = strlen(dataPost);
+    size_t dataLen = strlen(dataPost);
 
     HttpRequest request;
     HttpRequest::ParseResult result;

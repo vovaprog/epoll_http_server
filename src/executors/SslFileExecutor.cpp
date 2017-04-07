@@ -29,7 +29,7 @@ ProcessResult SslFileExecutor::process_sendFile(ExecutorData &data)
     {
         if(data.buffer.startWrite(p, size))
         {
-            int bytesRead = read(data.fd1, p, size);
+            ssize_t bytesRead = read(data.fd1, p, size);
 
             if(bytesRead < 0)
             {

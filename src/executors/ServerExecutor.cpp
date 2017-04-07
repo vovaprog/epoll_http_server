@@ -36,7 +36,7 @@ int ServerExecutor::up(ExecutorData &data)
 }
 
 
-ProcessResult ServerExecutor::process(ExecutorData &data, int fd, int events)
+ProcessResult ServerExecutor::process(ExecutorData &data, int fd, int /*events*/)
 {
     if(fd != data.fd0)
     {

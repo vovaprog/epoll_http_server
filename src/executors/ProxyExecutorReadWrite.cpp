@@ -100,7 +100,7 @@ ProcessResult ProxyExecutorReadWrite::process_forwardRequest(ExecutorData &data)
 
     if(data.buffer.startRead(p, size))
     {
-        int bytesWritten = write(data.fd1, p, size);
+        ssize_t bytesWritten = write(data.fd1, p, size);
 
         if(bytesWritten <= 0)
         {
@@ -149,9 +149,9 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseRead(ExecutorData &
 
     if(data.buffer.startWrite(p, size))
     {
-        int bytesRead = read(data.fd1, p, size);
+        ssize_t bytesRead = read(data.fd1, p, size);
 
-        log->debug("proxy read bytes: %d\n", bytesRead);
+        log->debug("proxy read bytes: %zd\n", bytesRead);
 
         if(bytesRead <= 0)
         {
@@ -211,9 +211,9 @@ ProcessResult ProxyExecutorReadWrite::process_forwardResponseWrite(ExecutorData 
     if(data.buffer.startRead(p, size))
     {
         int errorCode = 0;
-        int bytesWritten = writeFd0(data, p, size, errorCode);
+        ssize_t bytesWritten = writeFd0(data, p, size, errorCode);
 
-        log->debug("proxy write bytes: %d\n", bytesWritten);
+        log->debug("proxy write bytes: %zd\n", bytesWritten);
 
         if(bytesWritten <= 0)
         {

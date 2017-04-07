@@ -19,7 +19,7 @@ int NewFdExecutor::up(ExecutorData &data)
     return 0;
 }
 
-ProcessResult NewFdExecutor::process(ExecutorData &data, int fd, int events)
+ProcessResult NewFdExecutor::process(ExecutorData &data, int fd, int /*events*/)
 {
     eventfd_t val;
     if(eventfd_read(fd, &val) != 0)
