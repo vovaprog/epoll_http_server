@@ -3,14 +3,16 @@
     <logLevel>info</logLevel>                              <!-- values: debug, info, warning, error -->
     <logType>stdout</logType>                              <!-- values: stdout, mmap -->
     <logArchiveCount>20</logArchiveCount>
-    <threadCount>2</threadCount>
+    <threadCount>1</threadCount>
     <executorTimeoutMillis>10000</executorTimeoutMillis>   <!-- after this time inactive connection will be closed -->
     <httpPorts>
         <port>8000</port>
     </httpPorts>
+    <!--
     <httpsPorts>
         <port>1443</port>
     </httpsPorts>
+    -->
     <proxies>
         <proxy>
             <prefix>app</prefix>                  <!-- prefix of url. for example:   url: /app/page   prefix: app -->
