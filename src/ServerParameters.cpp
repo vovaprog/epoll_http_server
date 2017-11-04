@@ -122,6 +122,7 @@ int ServerParameters::load(const char *fileName)
         httpPorts.push_back(8080);
     }
 
+#if USE_SSL
     parent = root->FirstChildElement("httpsPorts");
     if(parent != nullptr)
     {
@@ -136,6 +137,7 @@ int ServerParameters::load(const char *fileName)
             httpsPorts.push_back(port);
         }
     }
+#endif
 
     parent = root->FirstChildElement("proxies");
     if(parent != nullptr)
@@ -191,6 +193,8 @@ int ServerParameters::load(const char *fileName)
                         proxy.connectionType = (proxy.connectionType | (int)ConnectionType::clear);
                     }
                 }
+
+#ifdef USE_SSL
                 if(el->QueryIntAttribute("ssl", &v) == tinyxml2::XML_SUCCESS)
                 {
                     if(v != 0)
@@ -198,6 +202,7 @@ int ServerParameters::load(const char *fileName)
                         proxy.connectionType = (proxy.connectionType | (int)ConnectionType::ssl);
                     }
                 }
+#endif
 
                 if(proxy.connectionType == (int)ConnectionType::none)
                 {
@@ -207,7 +212,11 @@ int ServerParameters::load(const char *fileName)
             }
             else
             {
+#ifdef USE_SSL
                 proxy.connectionType = ((int)ConnectionType::clear | (int)ConnectionType::ssl);
+#else
+                proxy.connectionType = (int)ConnectionType::clear;
+#endif
             }
 
             proxies.push_back(proxy);
@@ -231,14 +240,19 @@ void ServerParameters::writeToLog(Log *log) const
     {
         log->info("httpPort: %d\n", port);
     }
+
+#if USE_SSL
     for(int port : httpsPorts)
     {
         log->info("httpsPort: %d\n", port);
     }
+#endif
+
     for(const ProxyParameters & proxy : proxies)
     {
         const char *conTypeString = "none";
 
+#if USE_SSL
         if((proxy.connectionType & (int)ConnectionType::clear) && (proxy.connectionType & (int)ConnectionType::ssl))
         {
             conTypeString = "clear, ssl";
@@ -251,6 +265,12 @@ void ServerParameters::writeToLog(Log *log) const
         {
             conTypeString = "ssl";
         }
+#else
+        if(proxy.connectionType & (int)ConnectionType::clear)
+        {
+            conTypeString = "clear";
+        }
+#endif
 
         const char *socketTypeString = "none";
 

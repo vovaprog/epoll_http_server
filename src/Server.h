@@ -32,6 +32,7 @@ protected:
 
     void threadEntry(int pollLoopIndex);
 
+#ifdef USE_SSL
     SSL_CTX* sslCreateContext(Log *log);
 
     void sslDestroyContext(SSL_CTX *ctx);
@@ -41,6 +42,9 @@ protected:
 protected:
 
     static bool sslInited;
+#endif
+
+protected:
 
     ServerParameters parameters;
 

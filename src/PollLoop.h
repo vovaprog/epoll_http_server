@@ -8,11 +8,14 @@
 #include <RequestExecutor.h>
 #include <FileExecutor.h>
 #include <ProxyExecutorReadWrite.h>
-#include <SslServerExecutor.h>
-#include <SslRequestExecutor.h>
-#include <SslFileExecutor.h>
-#include <SslProxyExecutor.h>
 #include <ProxyExecutorSplice.h>
+
+#ifdef USE_SSL
+#    include <SslServerExecutor.h>
+#    include <SslRequestExecutor.h>
+#    include <SslFileExecutor.h>
+#    include <SslProxyExecutor.h>
+#endif
 
 #include <PollData.h>
 #include <BlockStorage.h>
@@ -82,14 +85,16 @@ protected:
 
     NewFdExecutor newFdExecutor;
     ServerExecutor serverExecutor;
-    SslServerExecutor sslServerExecutor;
     RequestExecutor requestExecutor;
-    SslRequestExecutor sslRequestExecutor;
     FileExecutor fileExecutor;
-    SslFileExecutor sslFileExecutor;
     ProxyExecutorSplice proxyExecutor;
-    SslProxyExecutor sslProxyExecutor;
 
+#ifdef USE_SSL
+    SslServerExecutor sslServerExecutor;
+    SslRequestExecutor sslRequestExecutor;
+    SslFileExecutor sslFileExecutor;
+    SslProxyExecutor sslProxyExecutor;
+#endif
 
     BlockStorage<ExecutorData> execDatas;
     BlockStorage<PollData> pollDatas;

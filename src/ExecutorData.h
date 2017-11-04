@@ -8,7 +8,10 @@
 #include <BlockStorage.h>
 
 #include <sys/types.h>
-#include <openssl/ssl.h>
+
+#ifdef USE_SSL
+#    include <openssl/ssl.h>
+#endif
 
 class Executor;
 struct ProxyParameters;
@@ -39,7 +42,11 @@ struct ExecutorData
     {
         invalid, readRequest, sendHeaders, sendFile,
         forwardRequest, forwardResponse, forwardResponseOnlyWrite,
-        sslHandshake, waitConnect, sendOnlyHeaders, ok
+        waitConnect, sendOnlyHeaders, ok,
+
+#ifdef USE_SSL
+        sslHandshake
+#endif
     };
 
     Executor *pExecutor = nullptr;
@@ -62,7 +69,9 @@ struct ExecutorData
 
     int port = 0;
 
+#ifdef USE_SSL
     SSL *ssl = nullptr;
+#endif
 
     static const long long int MAX_TIME_TO_LIVE_MILLIS = 1000 * 60 * 30; // 30 minutes
 

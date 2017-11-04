@@ -3,7 +3,11 @@
 
 enum class ConnectionType
 {
-    none = 0, clear = 1, ssl = 2
+    none = 0, clear = 1,
+
+#ifdef USE_SSL
+    ssl = 2
+#endif
 };
 
 #endif

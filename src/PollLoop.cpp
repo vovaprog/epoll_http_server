@@ -42,14 +42,16 @@ int PollLoop::init(ServerBase *srv, ServerParameters *params)
     }
 
     serverExecutor.init(this);
-    sslServerExecutor.init(this);
     requestExecutor.init(this);
     fileExecutor.init(this);
     proxyExecutor.init(this);
+
+#ifdef USE_SSL
+    sslServerExecutor.init(this);
     sslRequestExecutor.init(this);
     sslFileExecutor.init(this);
     sslProxyExecutor.init(this);
-
+#endif
 
     return 0;
 }
@@ -438,18 +440,22 @@ Executor* PollLoop::getExecutor(ExecutorType execType)
         return &requestExecutor;
     case ExecutorType::file:
         return &fileExecutor;
-    case ExecutorType::sslFile:
-        return &sslFileExecutor;
     case ExecutorType::proxy:
         return &proxyExecutor;
     case ExecutorType::server:
         return &serverExecutor;
+
+#ifdef USE_SSL
+    case ExecutorType::sslFile:
+        return &sslFileExecutor;
     case ExecutorType::serverSsl:
         return &sslServerExecutor;
     case ExecutorType::requestSsl:
         return &sslRequestExecutor;
     case ExecutorType::sslProxy:
         return &sslProxyExecutor;
+#endif
+
     default:
         return nullptr;
     }

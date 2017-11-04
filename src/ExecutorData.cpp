@@ -3,16 +3,22 @@
 #include <Executor.h>
 
 #include <unistd.h>
-#include <openssl/ssl.h>
+
+#ifdef USE_SSL
+#    include <openssl/ssl.h>
+#endif
 
 void ExecutorData::down()
 {
+#ifdef USE_SSL
     if(ssl != nullptr)
     {
         SSL_shutdown(ssl);
         SSL_free(ssl);
         ssl = nullptr;
     }
+#endif
+
     if(fd0 > 0)
     {
         close(fd0);

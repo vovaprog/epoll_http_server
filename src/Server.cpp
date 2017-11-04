@@ -7,9 +7,11 @@
 #include <signal.h>
 #include <climits>
 #include <mutex>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+
+#ifdef USE_SSL
+#    include <openssl/bio.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
 
 static std::recursive_mutex *sslMutexes = nullptr;
 bool Server::sslInited = false;
@@ -35,24 +37,6 @@ static void sslLockCallback(int mode, int type, const char *file, int line)
     }
 }
 
-
-int Server::staticInit()
-{
-    // ignore SIGPIPE
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(struct sigaction));
-    sa.sa_handler = SIG_IGN;
-    sa.sa_flags = 0;
-
-    if(sigaction(SIGPIPE, &sa, NULL) != 0)
-    {
-        perror("sigaction failed\n");
-    }
-
-    return 0;
-}
-
-
 int Server::sslInit()
 {
     if(!sslInited)
@@ -71,9 +55,28 @@ int Server::sslInit()
     return 0;
 }
 
+#endif
+
+int Server::staticInit()
+{
+    // ignore SIGPIPE
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+
+    if(sigaction(SIGPIPE, &sa, NULL) != 0)
+    {
+        perror("sigaction failed\n");
+    }
+
+    return 0;
+}
+
 
 void Server::staticDestroy()
 {
+#ifdef USE_SSL
     if(sslInited)
     {
         sslInited = false;
@@ -90,8 +93,10 @@ void Server::staticDestroy()
         ERR_free_strings();
         EVP_cleanup();
     }
+#endif
 }
 
+#ifdef USE_SSL
 
 SSL_CTX* Server::sslCreateContext(Log *log)
 {
@@ -136,6 +141,7 @@ void Server::sslDestroyContext(SSL_CTX *sslCtx)
     SSL_CTX_free(sslCtx);
 }
 
+#endif
 
 int Server::start(ServerParameters &parameters)
 {
@@ -159,6 +165,7 @@ int Server::start(ServerParameters &parameters)
 
     parameters.writeToLog(log);
 
+#ifdef USE_SSL
     if(parameters.httpsPorts.size() > 0)
     {
         if(sslInit() != 0)
@@ -175,7 +182,7 @@ int Server::start(ServerParameters &parameters)
             return -1;
         }
     }
-
+#endif
 
     loops = new PollLoop[parameters.threadCount];
 
@@ -200,6 +207,8 @@ int Server::start(ServerParameters &parameters)
         }
         ++counter;
     }
+
+#ifdef USE_SSL
     for(int port : parameters.httpsPorts)
     {
         if(loops[counter % parameters.threadCount].listenPort(port, ExecutorType::serverSsl) != 0)
@@ -209,6 +218,7 @@ int Server::start(ServerParameters &parameters)
         }
         ++counter;
     }
+#endif
 
     //=================================================
 
@@ -229,10 +239,12 @@ void Server::threadEntry(int pollLoopIndex)
 
     loops[pollLoopIndex].run();
 
+#ifdef USE_SSL
     if(parameters.httpsPorts.size() > 0)
     {
         ERR_remove_state(0);
     }
+#endif
 }
 
 
@@ -266,11 +278,13 @@ void Server::stop()
         threads = nullptr;
     }
 
+#ifdef USE_SSL
     if(sslCtx != nullptr)
     {
         sslDestroyContext(sslCtx);
         sslCtx = nullptr;
     }
+#endif
 
     if(log != nullptr)
     {

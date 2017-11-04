@@ -19,7 +19,11 @@ struct ServerParameters
         logFolder = "./log";
         threadCount = 1;
         httpPorts.clear();
+
+#if USE_SSL
         httpsPorts.clear();
+#endif
+
         proxies.clear();
         logLevel = Log::Level::info;
         logType = Log::Type::stdout;
@@ -48,7 +52,11 @@ struct ServerParameters
     bool logStats;
 
     std::vector<int> httpPorts;
+
+#if USE_SSL
     std::vector<int> httpsPorts;
+#endif
+
     std::vector<ProxyParameters> proxies;
 };
 

@@ -18,7 +18,7 @@
             <prefix>app</prefix>                  <!-- prefix of url. for example:   url: /app/page   prefix: app -->
             <address>127.0.0.1</address>          <!-- server address -->
             <port>7070</port>                     <!-- server port -->
-            <connectionType clear="0" ssl="1"/>   <!-- Enable this proxy only for specified connection types.
+            <connectionType clear="1" ssl="0"/>   <!-- Enable this proxy only for specified connection types.
                                                        If no connectionType element - all connection types are enabled.
                                                        If some attribute is not specified, it defaults to zero, connection type is disabled. -->
         </proxy>
