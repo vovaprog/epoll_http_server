@@ -5,9 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-char HttpRequest::checkUrlSymbols[0xff];
-char HttpRequest::readUrlSymbols[0xff];
-char HttpRequest::readHeaderKeySymbols[0xff];
+bool HttpRequest::checkUrlSymbols[256];
+bool HttpRequest::readUrlSymbols[256];
+bool HttpRequest::readHeaderKeySymbols[256];
 
 
 HttpRequest::HttpRequest()
@@ -29,7 +29,7 @@ HttpRequest::~HttpRequest()
 
 int HttpRequest::initSymbolArrays()
 {
-    for(int i = 0; i < 0xff ; ++i)
+    for(int i = 0; i < 256 ; ++i)
     {
         if((i >= 'a' && i <= 'z') ||
            (i >= 'A' && i <= 'Z') ||
@@ -37,15 +37,15 @@ int HttpRequest::initSymbolArrays()
             i == '/' || i == '.' || i == '_' ||
             i == '-' || i == ' ')
         {
-            checkUrlSymbols[i] = 1;
+            checkUrlSymbols[i] = true;
         }
         else
         {
-            checkUrlSymbols[i] = 0;
+            checkUrlSymbols[i] = false;
         }
     }
 
-    for(int i = 0; i < 0xff ; ++i)
+    for(int i = 0; i < 256 ; ++i)
     {
         if((i >= 'a' && i <= 'z') ||
            (i >= 'A' && i <= 'Z') ||
@@ -53,24 +53,24 @@ int HttpRequest::initSymbolArrays()
             i == '/' || i == '.' || i == '_' ||
             i == '=' || i == '-' || i == '%')
         {
-            readUrlSymbols[i] = 1;
+            readUrlSymbols[i] = true;
         }
         else
         {
-            readUrlSymbols[i] = 0;
+            readUrlSymbols[i] = false;
         }
     }
 
-    for(int i = 0; i < 0xff ; ++i)
+    for(int i = 0; i < 256 ; ++i)
     {
         if((i >= 'A' && i <= 'Z') ||
            (i >= 'a' && i <= 'z') || i == '-')
         {
-            readHeaderKeySymbols[i] = 1;
+            readHeaderKeySymbols[i] = true;
         }
         else
         {
-            readHeaderKeySymbols[i] = 0;
+            readHeaderKeySymbols[i] = false;
         }
     }
 
@@ -159,7 +159,7 @@ int HttpRequest::checkUrl() const
 
     for(int i = 0; urlBuffer[i] != 0 ; ++i)
     {
-        if(checkUrlSymbols[static_cast<unsigned char>(urlBuffer[i])] == 0)
+        if(!checkUrlSymbols[static_cast<unsigned char>(urlBuffer[i])])
         {
             return -1;
         }
@@ -342,7 +342,7 @@ HttpRequest::ReadResult HttpRequest::readUrl(int &length)
 
     while(i < size)
     {
-        if(readUrlSymbols[static_cast<unsigned char>(data[i])] != 0)
+        if(readUrlSymbols[static_cast<unsigned char>(data[i])])
         {
             ++i;
         }
@@ -428,7 +428,7 @@ HttpRequest::ReadResult HttpRequest::readHeaderKey(int &length)
 
     while(i < size)
     {
-        if(readHeaderKeySymbols[static_cast<unsigned char>(data[i])] != 0)
+        if(readHeaderKeySymbols[static_cast<unsigned char>(data[i])])
         {
             ++i;
         }

@@ -128,9 +128,9 @@ protected:
     char *urlBuffer = nullptr;
     int urlBufferSize = 0;
 
-    static char checkUrlSymbols[0xff];
-    static char readUrlSymbols[0xff];
-    static char readHeaderKeySymbols[0xff];
+    static bool checkUrlSymbols[256];
+    static bool readUrlSymbols[256];
+    static bool readHeaderKeySymbols[256];
 };
 
 #endif // HTTP_REQUEST_H
