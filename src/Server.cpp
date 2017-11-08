@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <climits>
 #include <mutex>
+#include <string.h>
 
 #ifdef USE_SSL
 #    include <openssl/bio.h>

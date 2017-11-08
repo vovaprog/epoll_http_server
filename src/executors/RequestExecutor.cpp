@@ -4,6 +4,8 @@
 #include <PollLoopBase.h>
 
 #include <sys/epoll.h>
+#include <string.h>
+
 
 int RequestExecutor::init(PollLoopBase *loop)
 {

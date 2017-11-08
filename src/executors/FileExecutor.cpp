@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
+#include <string.h>
 
 
 int FileExecutor::init(PollLoopBase *loop)

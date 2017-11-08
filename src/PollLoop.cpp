@@ -3,6 +3,7 @@
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <string.h>
 
 
 int PollLoop::init(ServerBase *srv, ServerParameters *params)

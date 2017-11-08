@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <atomic>
 #include <pthread.h>
+#include <string.h>
 
 
 std::atomic_bool runFlag;

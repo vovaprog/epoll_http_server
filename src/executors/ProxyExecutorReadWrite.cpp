@@ -5,6 +5,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <string.h>
+
 
 int ProxyExecutorReadWrite::init(PollLoopBase *loop)
 {

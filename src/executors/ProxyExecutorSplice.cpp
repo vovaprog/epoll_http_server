@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <string.h>
 
 
 int ProxyExecutorSplice::init(PollLoopBase *loop)

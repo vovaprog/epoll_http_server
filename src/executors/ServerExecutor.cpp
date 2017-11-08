@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <string.h>
 
 
 int ServerExecutor::init(PollLoopBase *srv)
