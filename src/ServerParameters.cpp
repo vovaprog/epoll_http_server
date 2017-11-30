@@ -1,230 +1,183 @@
 #include <ServerParameters.h>
 
-#include <tinyxml2.h>
+#include <ConfigReader.h>
 
 
-tinyxml2::XMLElement* getChild(tinyxml2::XMLElement *parent, const char *elementName, bool required)
+template<typename ParamType>
+bool getOptionalInt(const ConfigMapType &params, const char *paramName, ParamType &param)
 {
-    tinyxml2::XMLElement *el = parent->FirstChildElement(elementName);
-    if(el == nullptr)
+    auto iter = params.find(paramName);
+    if (iter != params.end())
     {
-        if(required)
+        try
         {
-            printf("element %s not found\n", elementName);
-            return nullptr;
+            param = std::stoi(iter->second);
         }
-        return nullptr;
-    }
-    return el;
-}
-
-int readElementInt(tinyxml2::XMLElement *parent, const char *elementName, int &result, bool required = false)
-{
-    tinyxml2::XMLElement *el = getChild(parent, elementName, false);
-    if(el != nullptr)
-    {
-        if(el->QueryIntText(&result) != 0)
+        catch (...)
         {
-            printf("invalid %s value\n", elementName);
-            return -1;
+            printf("invalid parameter value: %s", paramName);
+            return false;
         }
-        return 0;
     }
-    else
-    {
-        return required ? -1 : 0;
-    }
+    return true;
 }
 
-int readElementString(tinyxml2::XMLElement *parent, const char *elementName, std::string &result, bool required = false)
-{
-    tinyxml2::XMLElement *el = getChild(parent, elementName, required);
-    if(el != nullptr)
-    {
-        result = el->GetText();
-        return 0;
-    }
-    else
-    {
-        return required ? -1 : 0;
-    }
-}
-
-#define INT_PARAM(paramName) if(readElementInt(root, #paramName, paramName) != 0) { return -1; }
-#define STRING_PARAM(paramName) if(readElementString(root, #paramName, paramName) != 0) { return -1; }
-#define STRING_PARAM_RET(parent, paramName, ret) if(readElementString(parent, #paramName, ret) != 0) { return -1; }
 
 int ServerParameters::load(const char *fileName)
 {
     setDefaults();
 
-    tinyxml2::XMLDocument doc;
-    doc.LoadFile(fileName);
-
-    if(doc.ErrorID() != 0)
+    ConfigMapType configMap;
+    if (!configReadFile(fileName, configMap))
     {
-        printf("can't load config file\n");
+        printf("read config failed\n");
         return -1;
     }
 
-    tinyxml2::XMLElement *root = doc.FirstChildElement();
-    if(root == nullptr)
+    if (!getOptionalInt(configMap, "threadCount", threadCount))
     {
-        printf("invalid config file\n");
+        return -1;
+    }
+    if (!getOptionalInt(configMap, "executorTimeoutMillis", executorTimeoutMillis))
+    {
+        return -1;
+    }
+    if (!getOptionalInt(configMap, "logFileSize", logFileSize))
+    {
+        return -1;
+    }
+    if (!getOptionalInt(configMap, "logArchiveCount", logArchiveCount))
+    {
         return -1;
     }
 
-    INT_PARAM(threadCount);
-    INT_PARAM(executorTimeoutMillis);
-    INT_PARAM(logFileSize);
-    INT_PARAM(logArchiveCount);
-    STRING_PARAM(rootFolder);
-    STRING_PARAM(logFolder);
-
-    std::string s = "info";
-    STRING_PARAM_RET(root, logLevel, s);
-    if(s == "debug") logLevel = Log::Level::debug;
-    else if(s == "info") logLevel = Log::Level::info;
-    else if(s == "warning") logLevel = Log::Level::warning;
-    else if(s == "error") logLevel = Log::Level::error;
-    else
+    auto iter = configMap.find("rootFolder");
+    if (iter != configMap.end())
     {
-        printf("invalid logLevel\n");
-        return -1;
+        rootFolder = iter->second;
     }
 
-    s = "stdout";
-    STRING_PARAM_RET(root, logType, s);
-    if(s == "stdout") logType = Log::Type::stdout;
-    else if(s == "mmap") logType = Log::Type::mmap;
-    else
+    iter = configMap.find("logFolder");
+    if (iter != configMap.end())
     {
-        printf("invalid logType\n");
-        return -1;
+        rootFolder = iter->second;
     }
 
-    tinyxml2::XMLElement *parent = root->FirstChildElement("httpPorts");
-    if(parent != nullptr)
+    iter = configMap.find("logLevel");
+    if (iter != configMap.end())
     {
-        for(tinyxml2::XMLElement *child = parent->FirstChildElement("port"); child != NULL; child = child->NextSiblingElement())
+        if (iter->second == "debug") logLevel = Log::Level::debug;
+        else if (iter->second == "info") logLevel = Log::Level::info;
+        else if (iter->second == "warning") logLevel = Log::Level::warning;
+        else if (iter->second == "error") logLevel = Log::Level::error;
+        else
         {
-            int port;
-            if(child->QueryIntText(&port) != 0)
-            {
-                printf("invalid httpPort value\n");
-                return -1;
-            }
-            httpPorts.push_back(port);
+            printf("invalid logLevel\n");
+            return -1;
         }
     }
-    if(httpPorts.size() == 0)
-    {
-        httpPorts.push_back(8080);
-    }
 
-#if USE_SSL
-    parent = root->FirstChildElement("httpsPorts");
-    if(parent != nullptr)
+    iter = configMap.find("logType");
+    if (iter != configMap.end())
     {
-        for(tinyxml2::XMLElement *child = parent->FirstChildElement("port"); child != NULL; child = child->NextSiblingElement())
+        if (iter->second == "stdout") logType = Log::Type::stdout;
+        else if (iter->second == "mmap") logType = Log::Type::mmap;
+        else
         {
-            int port;
-            if(child->QueryIntText(&port) != 0)
-            {
-                printf("invalid httpPort value\n");
-                return -1;
-            }
-            httpsPorts.push_back(port);
+            printf("invalid logType\n");
+            return -1;
         }
     }
-#endif
 
-    parent = root->FirstChildElement("proxies");
-    if(parent != nullptr)
+    for (int portNum = 0; portNum < 100; ++portNum)
     {
-        for(tinyxml2::XMLElement *child = parent->FirstChildElement("proxy"); child != NULL; child = child->NextSiblingElement())
+        std::string key = "httpPort" + std::to_string(portNum);
+
+        int port = -1;
+        if (!getOptionalInt(configMap, key.c_str(), port))
         {
-            ProxyParameters proxy;
+            return -1;
+        }
+        if (port < 0)
+        {
+            break;
+        }
+        httpPorts.push_back(port);
+    }
 
-            if(readElementString(child, "prefix", proxy.prefix, true) != 0)
-            {
-                return -1;
-            }
-            if(readElementString(child, "address", proxy.address, true) != 0)
-            {
-                return -1;
-            }
-            if(readElementInt(child, "port", proxy.port, false) != 0)
-            {
-                return -1;
-            }
+    if (httpPorts.size() < 1)
+    {
+        printf("http port is not specified\n");
+        return -1;
+    }
 
-            std::string socketTypeString = "tcp";
-            STRING_PARAM_RET(child, socket, socketTypeString);
-            if(socketTypeString == "tcp")
+    // httpsPort parameter is not implemented.
+
+    for (int proxyNum = 0; proxyNum < 100; ++proxyNum)
+    {
+        std::string key = "proxy" + std::to_string(proxyNum) + ".port";
+
+        ProxyParameters proxy;
+
+        if (!getOptionalInt(configMap, key.c_str(), proxy.port))
+        {
+            return -1;
+        }
+        if (proxy.port <= 0)
+        {
+            break;
+        }
+
+        key = "proxy" + std::to_string(proxyNum) + ".address";
+        iter = configMap.find(key);
+        if (iter == configMap.end())
+        {
+            printf("proxy address is not set\n");
+            return -1;
+        }
+        proxy.address = iter->second;
+
+        key = "proxy" + std::to_string(proxyNum) + ".prefix";
+        iter = configMap.find(key);
+        if (iter == configMap.end())
+        {
+            printf("proxy prefix is not set\n");
+            return -1;
+        }
+        proxy.prefix = iter->second;
+
+        key = "proxy" + std::to_string(proxyNum) + ".socket";
+        iter = configMap.find(key);
+        if (iter != configMap.end())
+        {
+            if (iter->second == "tcp")
             {
                 proxy.socketType = SocketType::tcp;
-                if(proxy.port <= 0)
-                {
-                    printf("proxy port is not set\n");
-                    return -1;
-                }
             }
-            else if(socketTypeString == "unix")
+            else if (iter->second == "unix")
             {
                 proxy.socketType = SocketType::unix;
             }
             else
             {
-                printf("invalid socket type\n");
+                printf("invalid proxy socket type\n");
                 return -1;
             }
-
-            tinyxml2::XMLElement *el = getChild(child, "connectionType", false);
-            if(el != nullptr)
-            {
-                proxy.connectionType = (int)ConnectionType::none;
-
-                int v;
-                if(el->QueryIntAttribute("clear", &v) == tinyxml2::XML_SUCCESS)
-                {
-                    if(v != 0)
-                    {
-                        proxy.connectionType = (proxy.connectionType | (int)ConnectionType::clear);
-                    }
-                }
-
-#ifdef USE_SSL
-                if(el->QueryIntAttribute("ssl", &v) == tinyxml2::XML_SUCCESS)
-                {
-                    if(v != 0)
-                    {
-                        proxy.connectionType = (proxy.connectionType | (int)ConnectionType::ssl);
-                    }
-                }
-#endif
-
-                if(proxy.connectionType == (int)ConnectionType::none)
-                {
-                    printf("invalid connectionType\n");
-                    return -1;
-                }
-            }
-            else
-            {
-#ifdef USE_SSL
-                proxy.connectionType = ((int)ConnectionType::clear | (int)ConnectionType::ssl);
-#else
-                proxy.connectionType = (int)ConnectionType::clear;
-#endif
-            }
-
-            proxies.push_back(proxy);
         }
+        else
+        {
+            proxy.socketType = SocketType::tcp;
+        }
+
+        // connectionType parameter is not implemented, just set it to clear.
+        proxy.connectionType = static_cast<int>(ConnectionType::clear);
+
+        proxies.push_back(proxy);
     }
 
     return 0;
 }
+
 
 void ServerParameters::writeToLog(Log *log) const
 {
@@ -236,37 +189,37 @@ void ServerParameters::writeToLog(Log *log) const
     log->info("logType: %s\n", Log::logTypeString(logType));
     log->info("logFileSize: %d\n", logFileSize);
     log->info("logArchiveCount: %d\n", logArchiveCount);
-    for(int port : httpPorts)
+    for (int port : httpPorts)
     {
         log->info("httpPort: %d\n", port);
     }
 
 #if USE_SSL
-    for(int port : httpsPorts)
+    for (int port : httpsPorts)
     {
         log->info("httpsPort: %d\n", port);
     }
 #endif
 
-    for(const ProxyParameters & proxy : proxies)
+    for (const ProxyParameters & proxy : proxies)
     {
         const char *conTypeString = "none";
 
 #if USE_SSL
-        if((proxy.connectionType & (int)ConnectionType::clear) && (proxy.connectionType & (int)ConnectionType::ssl))
+        if ((proxy.connectionType & (int)ConnectionType::clear) && (proxy.connectionType & (int)ConnectionType::ssl))
         {
             conTypeString = "clear, ssl";
         }
-        else if(proxy.connectionType & (int)ConnectionType::clear)
+        else if (proxy.connectionType & (int)ConnectionType::clear)
         {
             conTypeString = "clear";
         }
-        else if(proxy.connectionType & (int)ConnectionType::ssl)
+        else if (proxy.connectionType & (int)ConnectionType::ssl)
         {
             conTypeString = "ssl";
         }
 #else
-        if(proxy.connectionType & (int)ConnectionType::clear)
+        if (proxy.connectionType & (int)ConnectionType::clear)
         {
             conTypeString = "clear";
         }
@@ -274,11 +227,11 @@ void ServerParameters::writeToLog(Log *log) const
 
         const char *socketTypeString = "none";
 
-        if(proxy.socketType == SocketType::tcp)
+        if (proxy.socketType == SocketType::tcp)
         {
             socketTypeString = "tcp";
         }
-        else if(proxy.socketType == SocketType::unix)
+        else if (proxy.socketType == SocketType::unix)
         {
             socketTypeString = "unix";
         }

@@ -2,5 +2,5 @@
 
 #packages needed to build epoll_http_server
 
-apt-get install g++ cmake libssl-dev libboost-dev libtinyxml2-dev
+apt-get install g++ cmake libssl-dev libboost-dev
 

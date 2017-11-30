@@ -38,7 +38,7 @@ static int installSigIntHandler()
 
 int main(int argc, char** argv)
 {
-    const char *fileName = "./config.xml";
+    const char *fileName = "./config.txt";
 
     printf("USAGE: epoll_http_server config_file_name (default: %s)\n", fileName);
 

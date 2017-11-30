@@ -1,0 +1,31 @@
+rootFolder=./data
+
+# values: debug, info, warning, error
+logLevel=info
+
+# values: stdout, mmap
+logType=stdout
+
+logArchiveCount=20
+logFileSize=1048576
+threadCount=1
+
+# after this time inactive connection will be closed
+executorTimeoutMillis=10000
+
+# specify http ports as httpPort0, httpPort1, ...
+httpPort0=8000
+
+# set parameters for multiple proxies as proxy0.paramName, proxy1.paramName, ...
+
+# prefix of url. for example:   url: /app/page   prefix: app
+proxy0.prefix=app
+
+# server address
+proxy0.address=127.0.0.1
+
+# server port
+proxy0.port=7070
+
+# server socket type values: tcp, unix
+proxy0.socket=tcp
